@@ -21,14 +21,29 @@ const float P = 0.5;
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
 
-/**This address will be used as broadcast*/
+/** This address will be used as broadcast*/
 const IPAddress broadcast(192,168,4,255);
+
+/** Subnet mask for local network. */
+const IPAddress subnet(255,255,255,0);
+
+/** Gateway address*/
+const IPAddress gateway(192,168,4,0);
+
+const char* create_node_id (char *txt)
+{
+  char *node = "Node ";
+  strcat(node, txt);
+
+  return node;
+}
 
 void wifi_connect(unsigned char CH)
 { 
   int n;
   String strongest;
   int power;
+  const char *node_id;
 
   switch (CH) {
     
@@ -67,11 +82,9 @@ void wifi_connect(unsigned char CH)
         delay(10);
         }
         if (strongest == BASE_SSID) {
-          Serial.println("Base");
           WiFi.begin(BASE_SSID, BASE_PASS);
         }
         else {
-          Serial.println("Not Base");
           WiFi.begin(strongest, NODE_PASS); 
         }
 
@@ -92,15 +105,26 @@ void wifi_connect(unsigned char CH)
     break;
 
     case  1:
-     WiFiUDP Udp;
 
-     WiFi.mode(WIFI_AP_STA);
-     WiFi.disconnect();
-     WiFi.begin(BASE_SSID, BASE_PASS);
+      node_id = create_node_id(MY_NODE);
+      WiFiUDP Udp;
+      WiFi.mode(WIFI_AP_STA);
+      //WiFi.disconnect();
+      WiFi.begin(BASE_SSID, BASE_PASS);
      
-     while (WiFi.status() != WL_CONNECTED) {
+      while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-     }
+      }
+
+      WiFi.softAPConfig(WiFi.localIP(), gateway, subnet);
+      WiFi.softAP(node_id, NODE_PASS);
+#if DEBUG
+      Serial.print("node_id = ");
+      Serial.println(node_id);
+      Serial.print("AP IP address: ");
+      Serial.print(WiFi.softAPIP());
+      Serial.println();
+#endif
 /*
      Udp.begin(BROADCAST_PORT);
      Udp.beginPacket(broadcast, BROADCAST_PORT);

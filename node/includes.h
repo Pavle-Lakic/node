@@ -20,7 +20,7 @@
 #include <FS.h>
 
 /** Debug flag, set to 1 to see debug messages.*/
-#define DEBUG			                0
+#define DEBUG			                1
 
 /** With this flag enabled, round = 0, ch_enable = 1 will
   * be written to filesystem. Useful to set manually
@@ -37,7 +37,7 @@
 #define CH_NUMBER_LENGTH          2
 
 /** This will be password for all nodes.*/
-#define NODE_PASS                 "pass"
+#define NODE_PASS                 "teorijazavere"
 
 /** This will be password for base station.*/
 #define BASE_PASS                 "teorijazavere"
@@ -47,6 +47,14 @@
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
+
+#define NODE_0                    0
+#define NODE_1                    1
+
+/** This defines node SSID*/
+#define MY_NODE                   "1"
+
+const char* create_node_id (char *txt);
 
 /**
  * @brief Connects to base, or to closest node.
