@@ -10,6 +10,9 @@
 
 #include "includes.h"
 
+/**Maximum number of nodes in network*/
+#define NUMBER_OF_NODES           2
+
 /** String length for round to be writen to filesystem.*/
 #define ROUND_NUMBER_LENGTH       2
 
@@ -25,31 +28,43 @@ const char *filename = "/conf.txt";
  *  Determined apriori, depends of number of nodes.*/
 const float P = 0.5;
 
-bool cluster_head(unsigned char round_cnt, unsigned char ch_enable)
+void full_circle(unsigned char *round_cnt, unsigned char *ch_enable)
 {
-  bool ret = false;
+  *round_cnt += 1;
+  if (*round_cnt > NUMBER_OF_NODES - 1)
+  {
+    *round_cnt = 0;
+    *ch_enable = 1;
+    Serial.println("Full circle from beggining.");
+  }
+  write_fs(*round_cnt, *ch_enable);
+}
+
+void cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
+{
   float rnd_nmb;
   float threshold;
 
-  if (ch_enable == 0) {
-    return ret;
-  }
-
   rnd_nmb = random_number();
-  threshold = calculate_threshold(P, round_cnt);
+  threshold = calculate_threshold(P, *round_cnt);
 
-  if (rnd_nmb < threshold) {
-    ret = true;
+  if ((rnd_nmb < threshold) && (*ch_enable == 1)) {
+    *ch_enable = 0;
   }
+  else {
+    *ch_enable = 1;
+  }
+
+  write_fs(*round_cnt, *ch_enable);
+
 #if DEBUG
-  if (ret == true) {
+  if (*ch_enable == 0) {
     Serial.println("Node will be cluster head for current round.");
   }
   else {
     Serial.println("Node will not be cluster head for current round.");
   }
-#endif  
-  return ret;
+#endif
 }
 
 bool mount_fs(void)
@@ -109,8 +124,15 @@ float calculate_threshold(float P, unsigned char r)
 {
   float T;
 
-  T = P/(1 - P*(r % 1/P));
+  T = P/(1 - P*(r % ((unsigned char)round(1/P))));
 
+#if DEBUG
+  Serial.print("r = ");
+  Serial.println(r);
+  Serial.print("T = ");
+  Serial.println(T, 3);
+#endif;
+  
   return T;
 }
 
@@ -120,6 +142,11 @@ float random_number(void)
 
   a = ESP8266TrueRandom.random(10000);
   a = a/10000;
+
+#if DEBUG
+  Serial.print("random_number = ");
+  Serial.println(a, 3);
+#endif
 
   return a;
 }

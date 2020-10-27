@@ -19,20 +19,29 @@
 #include <FS.h>
 
 /** Debug flag, set to 1 to see debug messages.*/
-#define DEBUG			                0
+#define DEBUG			                1
 
 /** With this flag enabled, round = 0, ch_enable = 1 will
-  * be written to filesystem. Useful to set 
+  * be written to filesystem. Useful to set manually
   * when all nodes must be in initial state.*/
 #define ROUND_RESET               0
+
+/**
+ * @brief Resets values of round and ch_enable if
+ * all nodes were cluster heads, so full new circle can begin.
+ * @param round_cnt Current round number.
+ * @param ch_enable Flag if node was CH in previous rounds.
+ * @return none.
+ */
+void full_circle(unsigned char *round_cnt, unsigned char *ch_enable);
 
 /**
  * @brief Decides if node will be cluster head or not.
  * @param round_cnt Current round number.
  * @param ch_enable Flag if node was CH in previous rounds.
- * @return True If node will be cluster head for current round.
+ * @return none.
  */
-bool cluster_head(unsigned char round_cnt, unsigned char ch_enable);
+void cluster_head(unsigned char *round_cnt, unsigned char *ch_enable);
 
 /**
  * @brief Mounts filesystem.

@@ -13,26 +13,28 @@ void setup() {
 
   unsigned char round_cnt;
   unsigned char ch_enable;
-  unsigned char CH;
 
   Serial.begin(9600);
   delay(1000);
   Serial.println();
 
   if (mount_fs()) {
-#if ROUND_RESET    
-    write_fs(0, 1);
-#endif    
+  
     read_fs(&round_cnt, &ch_enable);
   }
 
-  if (cluster_head(round_cnt, ch_enable)) {
-    CH = 1;
-  }
-  else {
-    CH = 0;
-  }
+  cluster_head(&round_cnt, &ch_enable);
+  full_circle(&round_cnt, &ch_enable);  
 
+#if ROUND_RESET    
+    write_fs(0, 1);
+#endif  
+
+#if DEBUG
+  unsigned char rnd_cnt;
+  unsigned char ch_en;
+  read_fs(&rnd_cnt, &ch_en);
+#endif
 }
 
 void loop() {
