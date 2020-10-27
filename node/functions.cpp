@@ -7,17 +7,7 @@
  *  @author Pavle Lakic
  *  @bug No known bugs
  */
-
 #include "includes.h"
-
-/**Maximum number of nodes in network*/
-#define NUMBER_OF_NODES           2
-
-/** String length for round to be writen to filesystem.*/
-#define ROUND_NUMBER_LENGTH       2
-
-/** String length for if node was cluster head to be written to filesystem.*/
-#define CH_NUMBER_LENGTH          2
 
 /** Name of file where round and if node was cluster head
  *  will be kept.
@@ -28,6 +18,107 @@ const char *filename = "/conf.txt";
  *  Determined apriori, depends of number of nodes.*/
 const float P = 0.5;
 
+/** This is the address of base station.*/
+const IPAddress base_station(192,168,4,1);
+
+/**This address will be used as broadcast*/
+const IPAddress broadcast(192,168,4,255);
+
+void wifi_connect(unsigned char CH)
+{ 
+  int n;
+  String strongest;
+  int power;
+
+  switch (CH) {
+    
+    case  0:
+    
+      WiFi.mode(WIFI_STA);
+      WiFi.disconnect();
+      n = WiFi.scanNetworks();
+     if (n == 0) {
+        Serial.println("no networks found");
+        // what to do if no networks are found?
+        // declare as CH?
+     } 
+     else {
+#if DEBUG
+        Serial.print(n);
+        Serial.println(" networks found");
+#endif
+        strongest = WiFi.SSID(0);
+        power = WiFi.RSSI(0);        
+        for (int i = 0; i < n; ++i) {
+        // Print SSID and RSSI for each network found
+          if (WiFi.RSSI(i) > power) {
+            power = WiFi.RSSI(i);
+            strongest = WiFi.SSID(i);
+          }
+#if DEBUG
+          Serial.print(i + 1);
+          Serial.print(": ");
+          Serial.print(WiFi.SSID(i));
+          Serial.print(" (");
+          Serial.print(WiFi.RSSI(i));
+          Serial.print(")");
+          Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
+#endif          
+        delay(10);
+        }
+        if (strongest == BASE_SSID) {
+          Serial.println("Base");
+          WiFi.begin(BASE_SSID, BASE_PASS);
+        }
+        else {
+          Serial.println("Not Base");
+          WiFi.begin(strongest, NODE_PASS); 
+        }
+
+          while (WiFi.status() != WL_CONNECTED) {
+            delay(500);
+          }
+      }
+
+#if DEBUG
+  Serial.print("Connected to ");
+  Serial.println(WiFi.SSID());
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.localIP());
+  Serial.println(strongest);
+  Serial.println(power);
+  Serial.println("I`m not CH for this round");
+#endif
+    break;
+
+    case  1:
+     WiFiUDP Udp;
+
+     WiFi.mode(WIFI_AP_STA);
+     WiFi.disconnect();
+     WiFi.begin(BASE_SSID, BASE_PASS);
+     
+     while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+     }
+/*
+     Udp.begin(BROADCAST_PORT);
+     Udp.beginPacket(broadcast, BROADCAST_PORT);
+     Udp.write(Reply);
+     Udp.endPacket();
+*/
+#if DEBUG
+     Serial.print("Connected to ");
+     Serial.println(WiFi.SSID());
+     Serial.print("IP address:\t");
+     Serial.println(WiFi.localIP());
+     Serial.println("I`m CH for this round");
+#endif
+
+    break;  
+  }
+}
+
 void full_circle(unsigned char *round_cnt, unsigned char *ch_enable)
 {
   *round_cnt += 1;
@@ -35,24 +126,29 @@ void full_circle(unsigned char *round_cnt, unsigned char *ch_enable)
   {
     *round_cnt = 0;
     *ch_enable = 1;
+#if DEBUG    
     Serial.println("Full circle from beggining.");
+#endif    
   }
   write_fs(*round_cnt, *ch_enable);
 }
 
-void cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
+unsigned char cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
 {
   float rnd_nmb;
   float threshold;
+  unsigned char ret;
 
   rnd_nmb = random_number();
   threshold = calculate_threshold(P, *round_cnt);
 
   if ((rnd_nmb < threshold) && (*ch_enable == 1)) {
     *ch_enable = 0;
+    ret = 1;
   }
   else {
     *ch_enable = 1;
+    ret = 0;
   }
 
   write_fs(*round_cnt, *ch_enable);
@@ -65,6 +161,8 @@ void cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
     Serial.println("Node will not be cluster head for current round.");
   }
 #endif
+
+  return ret;
 }
 
 bool mount_fs(void)

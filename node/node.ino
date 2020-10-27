@@ -13,17 +13,18 @@ void setup() {
 
   unsigned char round_cnt;
   unsigned char ch_enable;
+  unsigned char CH;
 
   Serial.begin(9600);
   delay(1000);
   Serial.println();
 
   if (mount_fs()) {
-  
     read_fs(&round_cnt, &ch_enable);
   }
 
-  cluster_head(&round_cnt, &ch_enable);
+  CH = cluster_head(&round_cnt, &ch_enable);
+  wifi_connect(CH);
   full_circle(&round_cnt, &ch_enable);  
 
 #if ROUND_RESET    

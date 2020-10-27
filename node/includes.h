@@ -8,6 +8,7 @@
  *  @author Pavle Lakic
  *  @bug No known bugs.
  */
+ 
 #ifndef INCLUDES_H_
 #define INCLUDES_H_
 
@@ -19,12 +20,40 @@
 #include <FS.h>
 
 /** Debug flag, set to 1 to see debug messages.*/
-#define DEBUG			                1
+#define DEBUG			                0
 
 /** With this flag enabled, round = 0, ch_enable = 1 will
   * be written to filesystem. Useful to set manually
   * when all nodes must be in initial state.*/
 #define ROUND_RESET               0
+
+/**Maximum number of nodes in network*/
+#define NUMBER_OF_NODES           2
+
+/** String length for round to be writen to filesystem.*/
+#define ROUND_NUMBER_LENGTH       2
+
+/** String length for if node was cluster head to be written to filesystem.*/
+#define CH_NUMBER_LENGTH          2
+
+/** This will be password for all nodes.*/
+#define NODE_PASS                 "pass"
+
+/** This will be password for base station.*/
+#define BASE_PASS                 "teorijazavere"
+
+/** Base station SSID.*/
+#define BASE_SSID                 "5G server"
+
+/** Port where broadcast data will be sent*/
+#define BROADCAST_PORT            2000
+
+/**
+ * @brief Connects to base, or to closest node.
+ * @param CH Indicates if this node is cluster head for current round.
+ * @return none.
+ */
+void wifi_connect(unsigned char CH);
 
 /**
  * @brief Resets values of round and ch_enable if
@@ -39,9 +68,11 @@ void full_circle(unsigned char *round_cnt, unsigned char *ch_enable);
  * @brief Decides if node will be cluster head or not.
  * @param round_cnt Current round number.
  * @param ch_enable Flag if node was CH in previous rounds.
- * @return none.
+ * Also writes 0 for ch_enable if node was declared as CH
+ * in this round.
+ * @return 1 if node is CH for this round, 0 if not.
  */
-void cluster_head(unsigned char *round_cnt, unsigned char *ch_enable);
+unsigned char cluster_head(unsigned char *round_cnt, unsigned char *ch_enable);
 
 /**
  * @brief Mounts filesystem.
