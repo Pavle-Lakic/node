@@ -11,11 +11,27 @@
 
 void setup() {
 
+  unsigned char round_cnt;
+  unsigned char ch_enable;
+  unsigned char CH;
+
   Serial.begin(9600);
   delay(1000);
   Serial.println();
-  float t = calculate_threshold(0.33, 0);
-  Serial.println(t, 2);
+
+  if (mount_fs()) {
+#if ROUND_RESET    
+    write_fs(0, 1);
+#endif    
+    read_fs(&round_cnt, &ch_enable);
+  }
+
+  if (cluster_head(round_cnt, ch_enable)) {
+    CH = 1;
+  }
+  else {
+    CH = 0;
+  }
 
 }
 

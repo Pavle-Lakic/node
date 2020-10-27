@@ -21,6 +21,28 @@
 /** Debug flag, set to 1 to see debug messages.*/
 #define DEBUG			                0
 
+/** With this flag enabled, round = 0, ch_enable = 1 will
+  * be written to filesystem. Useful to set 
+  * when all nodes must be in initial state.*/
+#define ROUND_RESET               0
+
+/**
+ * @brief Decides if node will be cluster head or not.
+ * @param round_cnt Current round number.
+ * @param ch_enable Flag if node was CH in previous rounds.
+ * @return True If node will be cluster head for current round.
+ */
+bool cluster_head(unsigned char round_cnt, unsigned char ch_enable);
+
+/**
+ * @brief Mounts filesystem.
+ * Mounts filesystem, so values of round and cluster 
+ * head enable can be written to filename file.
+ * @param none.
+ * @return true if mounted successfully.
+ */
+bool mount_fs(void);
+
 /**
  * @brief Generates threshold.
  *  This function is called only if current node was
