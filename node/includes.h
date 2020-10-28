@@ -48,11 +48,14 @@
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
 
+/** Node 0*/
 #define NODE_0                    0
+
+/** Node 1*/
 #define NODE_1                    1
 
 /** This defines node SSID*/
-#define MY_NODE                   "1"
+#define MY_NODE                   "0"
 
 const char* create_node_id (char *txt);
 
