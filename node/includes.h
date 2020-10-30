@@ -45,22 +45,83 @@
 /** Base station SSID.*/
 #define BASE_SSID                 "5G server"
 
-/** Port where broadcast data will be sent*/
-#define BROADCAST_PORT            2000
+/** This is flag if node is cluster head for current round.*/
+#define CLUSTER_HEAD              1
 
-/** Node 0*/
-#define NODE_0                    0
+/** This is flag if node is not cluster head for current round.*/
+#define NODE                      0
 
-/** Node 1*/
-#define NODE_1                    1
+/** Node 0 AP name.*/
+#define NODE_0                    "Node 0"
 
-/** This defines node SSID*/
-#define MY_NODE                   "0"
+/** Node 1 AP name.*/
+#define NODE_1                    "Node 1"
 
-const char* create_node_id (char *txt);
+/** Node 2 AP name.*/
+#define NODE_2                    "Node 2"
+
+/** Node 3 AP name.*/
+#define NODE_3                    "Node 3"
+
+/** Node 4 AP name.*/
+#define NODE_4                    "Node 4"
+
+/** Node 5 AP name.*/
+#define NODE_5                    "Node 5"
+
+/** Node 6 AP name.*/
+#define NODE_6                    "Node 6"
+
+/** MAC address of node which name will be Node 0.*/
+#define MAC_NODE_0                "A4:CF:12:C3:04:FD"
+
+/** MAC address of node which name will be Node 1*/
+#define MAC_NODE_1                "10:52:1C:F9:81:0A"
+
+/** MAC address of node which name will be Node 2.*/
+#define MAC_NODE_2                "48:3F:DA:77:0D:82"
+
+/** MAC address of node which name will be Node 3.*/
+#define MAC_NODE_3                "A4:CF:12:C3:0A:9B"
+
+/** MAC address of node which name will be Node 4.*/
+#define MAC_NODE_4                "48:3F:DA:76:C2:68"
+
+/** MAC address of node which name will be Node 5.*/
+#define MAC_NODE_5                "48:3F:DA:76:B3:33"
+
+/** MAC address of node which name will be Node 6.*/
+#define MAC_NODE_6                "macnode6"
+
+/** * @brief Will print connected networks with IP`s and MAC`s
+ *  to this node, if node is in AP mode. Also needed to uncomment
+ *  it
+ * @param none.
+ * @return none.
+ * 
+ */
+void print_connected(void);
+/**
+ * @brief In case of node it will send udp package to connected,
+ * cluster head to infrom it that it will be part of its cluster. 
+ * In case of cluster head, it will wait for some time for some
+ * nodes to connect to it.
+ * @param CH Flag if node is cluster head or not.
+ * @return none.
+ */
+void advertise(unsigned char CH);
 
 /**
- * @brief Connects to base, or to closest node.
+ * @brief Creates string which will be used for ssid. Name of network
+ * will be "Node x" where x is parameter passed to this function.
+ * @param txt MY_NODE should be passed here for each node.
+ * @return none.
+ */
+const char* create_node_id (void);
+
+/**
+ * @brief Connects to closest node if not cluster head, else becomes access point.
+ * for other nodes.
  * @param CH Indicates if this node is cluster head for current round.
  * @return none.
  */

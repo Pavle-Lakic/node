@@ -9,22 +9,30 @@
  */
 #include "includes.h"
 
-void setup() {
-
+void setup() 
+{
   unsigned char round_cnt;
   unsigned char ch_enable;
   unsigned char CH;
+  unsigned char mac_address[6];
 
+  //pinMode(LED_BUILTIN, OUTPUT);
+  
   Serial.begin(9600);
   delay(1000);
   Serial.println();
 
   if (mount_fs()) {
+
+  #if ROUND_RESET    
+    write_fs(0, 1);
+#endif  
     read_fs(&round_cnt, &ch_enable);
   }
 
   CH = cluster_head(&round_cnt, &ch_enable);
   wifi_connect(CH);
+  advertise(CH);
   full_circle(&round_cnt, &ch_enable);  
 
 #if ROUND_RESET    
@@ -38,6 +46,7 @@ void setup() {
 #endif
 }
 
-void loop() {
+void loop() 
+{
 
 }
