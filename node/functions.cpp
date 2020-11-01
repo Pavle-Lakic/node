@@ -333,70 +333,69 @@ void advertise(unsigned char CH)
                       ESP.getFreeHeap());
 #endif
 
-            int n = Udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
-            packetBuffer[n] = '\0';
+              int n = Udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
+              packetBuffer[n] = '\0';
 
 #if DEBUG         
-            Serial.println("Contents:");
-            Serial.println(packetBuffer);
+              Serial.println("Contents:");
+              Serial.println(packetBuffer);
 #endif
 
-            if (strcmp(packetBuffer, MAC_NODE_0) == 0) {
+              if (strcmp(packetBuffer, MAC_NODE_0) == 0) {
 
 #if DEBUG
-              Serial.println("This is from Node 0");
+                Serial.println("This is from Node 0");
 #endif
 
-            }
-            else if (strcmp(packetBuffer, MAC_NODE_1) == 0) {
+              }
+              else if (strcmp(packetBuffer, MAC_NODE_1) == 0) {
 
 #if DEBUG
-              Serial.println("This is from Node 1");
+                Serial.println("This is from Node 1");
 #endif
 
-            }
-            else if (strcmp(packetBuffer, MAC_NODE_2) == 0) {
+              }
+              else if (strcmp(packetBuffer, MAC_NODE_2) == 0) {
 
 #if DEBUG
-              Serial.println("This is from Node 2");
+                Serial.println("This is from Node 2");
 #endif
 
-            }
-            else if (strcmp(packetBuffer, MAC_NODE_3) == 0) {
+              }
+              else if (strcmp(packetBuffer, MAC_NODE_3) == 0) {
 
 #if DEBUG
-              Serial.println("This is from Node 3");
+                Serial.println("This is from Node 3");
 #endif
-            }
-
-            else if (strcmp(packetBuffer, MAC_NODE_4) == 0) {
+              }
+              else if (strcmp(packetBuffer, MAC_NODE_4) == 0) {
 
 #if DEBUG
-              Serial.println("This is from Node 4");
+                Serial.println("This is from Node 4");
 #endif
 
-            }
-            else if (strcmp(packetBuffer, MAC_NODE_5) == 0) {
+              }
+              else if (strcmp(packetBuffer, MAC_NODE_5) == 0) {
 
 #if DEBUG
-              Serial.println("This is from Node 5");
+                Serial.println("This is from Node 5");
 #endif
 
-            }
-            else if (strcmp(packetBuffer, MAC_NODE_6) == 0) {
+              }
+              else if (strcmp(packetBuffer, MAC_NODE_6) == 0) {
 
 #if DEBUG
-              Serial.println("This is from Node 6");
+                Serial.println("This is from Node 6");
 #endif
 
-            }
-            else {
+              }
+              else {
 
 #if DEBUG
-              Serial.println("I dont know who this is.");
+                Serial.println("I dont know who this is.");
 #endif
 
-            }
+              }
           }
         }     
     break;
@@ -425,18 +424,22 @@ void wifi_connect(unsigned char CH)
      if (n == 0) {
      } 
      else {
+
 #if DEBUG
         Serial.print(n);
         Serial.println(" networks found");
 #endif
+
         strongest = WiFi.SSID(0);
-        power = WiFi.RSSI(0);        
+        power = WiFi.RSSI(0);
+
         for (int i = 0; i < n; ++i) {
-        // Print SSID and RSSI for each network found
+
           if (WiFi.RSSI(i) > power) {
             power = WiFi.RSSI(i);
             strongest = WiFi.SSID(i);
           }
+
 #if DEBUG
           Serial.print(i + 1);
           Serial.print(": ");
@@ -446,6 +449,7 @@ void wifi_connect(unsigned char CH)
           Serial.print(")");
           Serial.println((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
 #endif          
+
         delay(10);
         }
         if (strongest == BASE_SSID) {
@@ -469,9 +473,11 @@ void wifi_connect(unsigned char CH)
   Serial.println(power);
   Serial.println("I`m not CH for this round");
 #endif
+
     break;
 
     case  CLUSTER_HEAD:
+
       Udp.begin(BROADCAST_PORT);
       WiFi.mode(WIFI_AP_STA);
       WiFi.disconnect();
