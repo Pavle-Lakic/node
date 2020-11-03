@@ -93,6 +93,11 @@
 /** MAC address of node which name will be Node 6.*/
 #define MAC_NODE_6                "macnode6"
 
+#define ADC_PIN                   A0
+
+/** Port where broadcast data will be sent*/
+#define BROADCAST_PORT            2000
+
 /** * @brief Will print connected networks with IP`s and MAC`s
  *  to this node, if node is in AP mode. Also needed to uncomment
  *  it
@@ -188,5 +193,12 @@ void read_fs(unsigned char *round_cnt, unsigned char *ch);
  * 	@return none.
  */
 void write_fs(int round_cnt, int ch);
+
+/**
+ *  @brief Reads value of ADC.
+ *  @param none.
+ *  @return Value of ADC (10 bit).
+ */
+unsigned short read_adc(void);
 
 #endif // INCLUDES_H_

@@ -9,6 +9,8 @@
  */
 #include "includes.h"
 
+#define IP(a,b,c,d) (uint32_t)(a | (b << 8) | (c << 16) | (d << 24))
+
 /** Name of file where round and if node was cluster head
  *  will be kept.*/
 const char *filename = "/conf.txt";
@@ -21,21 +23,18 @@ const float P = 0.5;
 const IPAddress base_station(192,168,4,1);
 
 /** This address will be used as broadcast*/
-const IPAddress broadcast(192,168,4,255);
-
-const IPAddress send_broadcast(192,168,4,254);
+const IPAddress broadcast(192,168,5,255);
 
 /** Subnet mask for local network. */
 const IPAddress subnet(255,255,255,0);
 
 /** Gateway address*/
-const IPAddress gateway(192,168,4,1);
-
-/** Port where broadcast data will be sent*/
-unsigned int BROADCAST_PORT = 2000;
+const IPAddress gateway(192,168,5,0);
 
 /**This node name.*/
 const char *node_name;
+
+uint32_t apIP;
 
 Ticker timeout;
 WiFiUDP Udp;
@@ -90,6 +89,14 @@ void print_connected(void)
 }
 #endif
 
+unsigned short read_adc(void)
+{
+  unsigned short ret;
+
+  ret = analogRead(ADC_PIN);
+
+  return ret;
+}
 const char* create_node_id (void)
 {
   const char *node;
@@ -103,24 +110,31 @@ const char* create_node_id (void)
 
   if (mac_address == MAC_NODE_0) {
     node = NODE_0;
+    apIP = IP(192, 168, 5, 20);
   }
   else if (mac_address == MAC_NODE_1) {
     node = NODE_1;
+    apIP = IP(192, 168, 5, 21);
   }
   else if (mac_address == MAC_NODE_2) {
     node = NODE_2;
+    apIP = IP(192, 168, 5, 22);
   }
   else if (mac_address == MAC_NODE_3) {
     node = NODE_3;
+    apIP = IP(192, 168, 5, 23);
   }
   else if (mac_address == MAC_NODE_4) {
     node = NODE_4;
+    apIP = IP(192, 168, 5, 24);
   }
   else if (mac_address == MAC_NODE_5) {
     node = NODE_5;
+    apIP = IP(192, 168, 5, 25);
   }
   else if (mac_address == MAC_NODE_6) {
     node = NODE_6;
+    apIP = IP(192, 168, 5, 26);
   }
   else {
     node = "New Node!";
@@ -138,13 +152,24 @@ void advertise(unsigned char CH)
   struct station_info *stat_info;
   struct ip4_addr *IPaddress;
   char macStr[18] = {0};
+  unsigned short adc;
+  char ADC_string[5];
   IPAddress address; 
 
+  adc = read_adc();
+  sprintf(ADC_string, "%hu", adc);
+  
   switch(CH) {
 
     case NODE:
 
       Udp.begin(BROADCAST_PORT);
+
+#if DEBUG
+      Serial.println("Node: Waiting for udp message");
+      Serial.print("My local IP Adress is :");
+      Serial.println(WiFi.localIP());
+#endif
 
       while(!received) {
 
@@ -174,9 +199,11 @@ void advertise(unsigned char CH)
 
 #if DEBUG
             Serial.println("Sending MAC address and ADC value ...");
+            Serial.print("Received message from IP: ");
+            Serial.println(Udp.remoteIP());
 #endif
-
-                Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+                delay(1000);
+                Udp.beginPacket(Udp.remoteIP(), BROADCAST_PORT);
                 Udp.write(WiFi.macAddress().c_str());
                 // after sleep, send adc value.
                 Udp.endPacket();
@@ -189,6 +216,7 @@ void advertise(unsigned char CH)
 
         }
       }
+    
 
 #if DEBUG
         Serial.print("I will be part of :");
@@ -202,47 +230,44 @@ void advertise(unsigned char CH)
     case CLUSTER_HEAD:
 
 #if DEBUG
-        Serial.println("Waiting for other nodes ...");
+      Serial.println("Waiting for other nodes ...");
 #endif
 
-        delay(15000);
+      delay(15000);
 
 #if DEBUG
-        Serial.println("Done waiting for other nodes to connect!");
-        //print_connected();
+      Serial.println("Done waiting for other nodes to connect!");
+      //print_connected();
 #endif
 
-        number_of_nodes = wifi_softap_get_station_num();
-        stat_info = wifi_softap_get_station_info();
+      number_of_nodes = wifi_softap_get_station_num();
+      stat_info = wifi_softap_get_station_info();
 
-    while (stat_info != NULL) {
+      while(stat_info != NULL) {
+        
+        IPaddress = &stat_info->ip;
+        address = IPaddress->addr;
+#if DEBUG
+        Serial.print(" IP adress is = ");
+        Serial.print(address);
+        Serial.print(" with MAC adress is = ");
+        Serial.print(stat_info->bssid[0],HEX);Serial.print(" ");
+        Serial.print(stat_info->bssid[1],HEX);Serial.print(" ");
+        Serial.print(stat_info->bssid[2],HEX);Serial.print(" ");
+        Serial.print(stat_info->bssid[3],HEX);Serial.print(" ");
+        Serial.print(stat_info->bssid[4],HEX);Serial.print(" ");
+        Serial.print(stat_info->bssid[5],HEX);Serial.print(" ");
+#endif
+
+        sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", stat_info->bssid[0],  stat_info->bssid[1], stat_info->bssid[2], stat_info->bssid[3], stat_info->bssid[4], stat_info->bssid[5]);
+
+#if DEBUG
+        Serial.println(macStr);
+#endif
+
+        stat_info = STAILQ_NEXT(stat_info, next);
+      }
     
-      IPaddress = &stat_info->ip;
-      address = IPaddress->addr;
-
-#if DEBUG
-      Serial.print(" IP adress is = ");
-      Serial.print((address));
-      Serial.print(" with MAC adress is = ");
-      Serial.print(stat_info->bssid[0],HEX);Serial.print(" ");
-      Serial.print(stat_info->bssid[1],HEX);Serial.print(" ");
-      Serial.print(stat_info->bssid[2],HEX);Serial.print(" ");
-      Serial.print(stat_info->bssid[3],HEX);Serial.print(" ");
-      Serial.print(stat_info->bssid[4],HEX);Serial.print(" ");
-      Serial.print(stat_info->bssid[5],HEX);Serial.print(" ");
-#endif
-
-      sprintf(macStr, "%02X:%02X:%02X:%02X:%02X:%02X", stat_info->bssid[0],  stat_info->bssid[1], stat_info->bssid[2], stat_info->bssid[3], stat_info->bssid[4], stat_info->bssid[5]);
-
-#if DEBUG
-      Serial.println(macStr);
-#endif
-
-      stat_info = STAILQ_NEXT(stat_info, next);
-    }
-    
-    Udp.beginPacket(broadcast, BROADCAST_PORT);
-
 #if DEBUG
     Serial.print("macStr = ");
     Serial.println(macStr);
@@ -255,8 +280,9 @@ void advertise(unsigned char CH)
 #if DEBUG
       Serial.println("Ovde je MAC_NODE_0");
 #endif
-
+      Udp.beginPacket(broadcast, BROADCAST_PORT);
       Udp.write(NODE_0);
+      Udp.endPacket();
     }
     else if (strcmp(macStr, MAC_NODE_1) == 0) {
 
@@ -264,7 +290,9 @@ void advertise(unsigned char CH)
       Serial.println("Ovde je MAC_NODE_1");
 #endif
 
+      Udp.beginPacket(broadcast, BROADCAST_PORT);
       Udp.write(NODE_1);
+      Udp.endPacket();
     }
     else if (strcmp(macStr, MAC_NODE_2) == 0) {
 
@@ -272,7 +300,9 @@ void advertise(unsigned char CH)
       Serial.println("Ovde je MAC_NODE_2");
 #endif
 
+      Udp.beginPacket(broadcast, BROADCAST_PORT);
       Udp.write(NODE_2);
+      Udp.endPacket();
     }
     else if (strcmp(macStr, MAC_NODE_3) == 0) {
 
@@ -280,7 +310,9 @@ void advertise(unsigned char CH)
       Serial.println("Ovde je MAC_NODE_3");
 #endif
 
+      Udp.beginPacket(broadcast, BROADCAST_PORT);
       Udp.write(NODE_3);
+      Udp.endPacket();
     }
     else if (strcmp(macStr, MAC_NODE_4) == 0) {
 
@@ -288,7 +320,9 @@ void advertise(unsigned char CH)
       Serial.println("Ovde je MAC_NODE_4");
 #endif
 
+      Udp.beginPacket(broadcast, BROADCAST_PORT);
       Udp.write(NODE_4);
+      Udp.endPacket();
     }
     else if (strcmp(macStr, MAC_NODE_5) == 0) {
 
@@ -296,7 +330,9 @@ void advertise(unsigned char CH)
       Serial.println("Ovde je MAC_NODE_5");
 #endif
 
+      Udp.beginPacket(broadcast, BROADCAST_PORT);
       Udp.write(NODE_5);
+      Udp.endPacket();
     }
     else if (strcmp(macStr, MAC_NODE_6) == 0) {
 
@@ -304,7 +340,9 @@ void advertise(unsigned char CH)
       Serial.println("Ovde je MAC_NODE_6");
 #endif
 
+      Udp.beginPacket(broadcast, BROADCAST_PORT);
       Udp.write(NODE_6);
+      Udp.endPacket();
     }
     else {
 
@@ -313,16 +351,20 @@ void advertise(unsigned char CH)
 #endif
 
     }
-    Udp.endPacket();
 
     Udp.begin(BROADCAST_PORT);
+
+#if DEBUG
+    Serial.println("Listening to broadcast port ...");
+    Serial.print("Number of connected nodes = ");
+    Serial.println(number_of_nodes);
+#endif
 
         while (number_of_nodes > 0) {
 
           int packetSize = Udp.parsePacket();
    
           if (packetSize) {
-
               number_of_nodes -= 1;
 
 #if DEBUG
@@ -344,48 +386,48 @@ void advertise(unsigned char CH)
               if (strcmp(packetBuffer, MAC_NODE_0) == 0) {
 
 #if DEBUG
-                Serial.println("This is from Node 0");
+                Serial.println("This is from Node 0, collect ADC data here");
 #endif
 
               }
               else if (strcmp(packetBuffer, MAC_NODE_1) == 0) {
 
 #if DEBUG
-                Serial.println("This is from Node 1");
+                Serial.println("This is from Node 1, collect ADC data here");
 #endif
 
               }
               else if (strcmp(packetBuffer, MAC_NODE_2) == 0) {
 
 #if DEBUG
-                Serial.println("This is from Node 2");
+                Serial.println("This is from Node 2, collect ADC data here");
 #endif
 
               }
               else if (strcmp(packetBuffer, MAC_NODE_3) == 0) {
 
 #if DEBUG
-                Serial.println("This is from Node 3");
+                Serial.println("This is from Node 3, collect ADC data here");
 #endif
               }
               else if (strcmp(packetBuffer, MAC_NODE_4) == 0) {
 
 #if DEBUG
-                Serial.println("This is from Node 4");
+                Serial.println("This is from Node 4, collect ADC data here");
 #endif
 
               }
               else if (strcmp(packetBuffer, MAC_NODE_5) == 0) {
 
 #if DEBUG
-                Serial.println("This is from Node 5");
+                Serial.println("This is from Node 5, collect ADC data here");
 #endif
 
               }
               else if (strcmp(packetBuffer, MAC_NODE_6) == 0) {
 
 #if DEBUG
-                Serial.println("This is from Node 6");
+                Serial.println("This is from Node 6, collect ADC data here");
 #endif
 
               }
@@ -397,7 +439,25 @@ void advertise(unsigned char CH)
 
               }
           }
-        }     
+        }
+
+       WiFi.disconnect();
+       WiFi.mode(WIFI_STA);
+       WiFi.begin(BASE_SSID, BASE_PASS);
+     
+      while (WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+      }
+
+#if DEBUG
+    Serial.println("Acumulate from nodes and send ...");
+#endif
+
+    Udp.beginPacket(base_station, BROADCAST_PORT);
+    Udp.write(node_name);
+    Udp.write("Acumulate from nodes and send ...");
+    Udp.endPacket();
+   
     break;
   }
 }
@@ -409,8 +469,13 @@ void wifi_connect(unsigned char CH)
   int power;
   const char *node_id;
   char  ReplyBuffer[] = "acknowledged\r\n";
+  unsigned short adc;
+  char ADC_string[5];
 
   node_id = create_node_id();  
+  adc = read_adc();
+  sprintf(ADC_string, "%hu", adc);
+  
 
   switch (CH) {
     
@@ -418,7 +483,7 @@ void wifi_connect(unsigned char CH)
     
       WiFi.mode(WIFI_STA);
       WiFi.disconnect();
-      delay(2000);
+      delay(5000);
 
       n = WiFi.scanNetworks();
      if (n == 0) {
@@ -461,7 +526,33 @@ void wifi_connect(unsigned char CH)
 
           while (WiFi.status() != WL_CONNECTED) {
             delay(500);
+
+#if DEBUG
+            Serial.println("Connecting ...");
+#endif 
           }
+#if DEBUG
+        Serial.print("Connected to: ");
+        Serial.println(WiFi.SSID());
+        Serial.print("My IP address is : ");
+        Serial.println(WiFi.localIP());
+#endif
+
+        if (strongest == BASE_SSID) {
+          Udp.beginPacket(base_station, BROADCAST_PORT);
+          Udp.write(node_name);
+          Udp.write(": ");
+          Udp.write(ADC_string);
+          Udp.endPacket(); 
+
+#if DEBUG
+          Serial.println("I should send node name and ADC value, then go to sleep");
+#endif
+
+        }
+        else {
+          advertise(NODE);
+        }
       }
 
 #if DEBUG
@@ -478,18 +569,18 @@ void wifi_connect(unsigned char CH)
 
     case  CLUSTER_HEAD:
 
-      Udp.begin(BROADCAST_PORT);
       WiFi.mode(WIFI_AP_STA);
       WiFi.disconnect();
+    
+      WiFi.softAPConfig(IPAddress(apIP), IPAddress(apIP), subnet);
+      WiFi.softAP(node_id, NODE_PASS);
+/*
       WiFi.begin(BASE_SSID, BASE_PASS);
      
       while (WiFi.status() != WL_CONNECTED) {
         delay(1000);
       }
-        
-      WiFi.softAPConfig(WiFi.localIP(), WiFi.localIP(), subnet);
-      WiFi.softAP(node_id, NODE_PASS);
-
+*/
 #if DEBUG
       Serial.print("node_id = ");
       Serial.println(node_id);
@@ -502,6 +593,8 @@ void wifi_connect(unsigned char CH)
       Serial.println(WiFi.localIP());
       Serial.println("I`m CH for this round");
 #endif
+
+      advertise(CLUSTER_HEAD);
 
     break;  
   }
@@ -517,6 +610,7 @@ void full_circle(unsigned char *round_cnt, unsigned char *ch_enable)
     
 #if DEBUG    
     Serial.println("Full circle from beggining.");
+    Serial.println("This is end of round.");
 #endif
 
   }
