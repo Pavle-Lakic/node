@@ -93,10 +93,35 @@
 /** MAC address of node which name will be Node 6.*/
 #define MAC_NODE_6                "macnode6"
 
+#define NODE0_PORT                 3000
+#define NODE1_PORT                 3001
+#define NODE2_PORT                 3002
+#define NODE3_PORT                 3003
+#define NODE4_PORT                 3004
+#define NODE5_PORT                 3005
+#define NODE6_PORT                 3006
+
 #define ADC_PIN                   A0
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
+
+enum Node {
+  NODE0,
+  NODE1,
+  NODE2,
+  NODE3,
+  NODE4,
+  NODE5,
+  NODE6
+};
+
+unsigned char check_ch( const char * txt);
+unsigned char wait_for_CH (void);
+void strongest_ch_ssid(void);
+unsigned char scan_nodes(void);
+void decrypt_node(char *txt);
+void get_ch_address(const char *txt);
 
 /** * @brief Will print connected networks with IP`s and MAC`s
  *  to this node, if node is in AP mode. Also needed to uncomment
