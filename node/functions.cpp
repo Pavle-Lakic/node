@@ -106,6 +106,8 @@ const char* create_node_id (void)
   const char *node;
   String mac_address;
 
+  node_name[9] = '\0';
+
   mac_address = WiFi.macAddress();
 
 #if DEBUG
@@ -115,36 +117,42 @@ const char* create_node_id (void)
   if (mac_address == MAC_NODE_0) {
     node = NODE_0;
     apIP = IP(192, 168, 5, 20);
+    strncpy(node_name, NODE_0, sizeof(NODE_0));
   }
   else if (mac_address == MAC_NODE_1) {
     node = NODE_1;
     apIP = IP(192, 168, 5, 21);
+    strncpy(node_name, NODE_1, sizeof(NODE_1));
   }
   else if (mac_address == MAC_NODE_2) {
     node = NODE_2;
     apIP = IP(192, 168, 5, 22);
+    strncpy(node_name, NODE_2, sizeof(NODE_2));
   }
   else if (mac_address == MAC_NODE_3) {
     node = NODE_3;
     apIP = IP(192, 168, 5, 23);
+    strncpy(node_name, NODE_3, sizeof(NODE_3));
   }
   else if (mac_address == MAC_NODE_4) {
     node = NODE_4;
     apIP = IP(192, 168, 5, 24);
+    strncpy(node_name, NODE_4, sizeof(NODE_4));
   }
   else if (mac_address == MAC_NODE_5) {
     node = NODE_5;
     apIP = IP(192, 168, 5, 25);
+    strncpy(node_name, NODE_5, sizeof(NODE_5));
   }
   else if (mac_address == MAC_NODE_6) {
     node = NODE_6;
     apIP = IP(192, 168, 5, 26);
+    strncpy(node_name, NODE_6, sizeof(NODE_6));
   }
   else {
     node = "New Node!";
   }
 
-  strcpy(node_name, node);
   return node;
 }
 
@@ -219,45 +227,38 @@ unsigned char check_ch( const char *txt)
 void decrypt_node(char *txt)
 {
   Udp.beginPacket(broadcast, BROADCAST_PORT);
-  
+
   if (strcmp(txt, MAC_NODE_0) == 0) {
-    //Udp.beginPacket(broadcast, NODE0_PORT);
     Udp.write(NODE_0);
     Udp.write(": ");
     Udp.write("9"); 
   }
   else if (strcmp(txt, MAC_NODE_1) == 0) {
-    //Udp.beginPacket(broadcast, NODE1_PORT);
     Udp.write(NODE_1);
     Udp.write(": ");
     Udp.write("9");
   }
   else if (strcmp(txt, MAC_NODE_2) == 0) {
-    //Udp.beginPacket(broadcast, NODE2_PORT);
     Udp.write(NODE_2);
     Udp.write(": ");
     Udp.write("9");
   }
   else if (strcmp(txt, MAC_NODE_3) == 0) {
-    //Udp.beginPacket(broadcast, NODE3_PORT);
     Udp.write(NODE_3);
     Udp.write(": ");
     Udp.write("9");
   }
   else if (strcmp(txt, MAC_NODE_4) == 0) {
-    //Udp.beginPacket(broadcast, NODE4_PORT);
     Udp.write(NODE_4);
     Udp.write(": ");
     Udp.write("9");
   }
   else if (strcmp(txt, MAC_NODE_5) == 0) {
-    //Udp.beginPacket(broadcast, NODE5_PORT);
     Udp.write(NODE_5);
     Udp.write(": ");
     Udp.write("9");
   }
   else if (strcmp(txt, MAC_NODE_6) == 0) {
-    //Udp.beginPacket(broadcast, NODE6_PORT);
     Udp.write(NODE_6);
     Udp.write(": ");
     Udp.write("9");
@@ -332,31 +333,24 @@ void get_ch_address(const char *txt)
 {
   if (strcmp(txt, NODE_0) == 0) {
     ch_address = IP(192, 168, 5, 20);
-    port_to_send = NODE0_PORT;
   }
   else if (strcmp(txt, NODE_1) == 0) {
     ch_address = IP(192, 168, 5, 21);
-    port_to_send = NODE1_PORT;
   }
   else if (strcmp(txt, NODE_2) == 0) {
     ch_address = IP(192, 168, 5, 22);
-    port_to_send = NODE2_PORT;
   }
   else if (strcmp(txt, NODE_3) == 0) {
     ch_address = IP(192, 168, 5, 23);
-    port_to_send = NODE3_PORT;
   }
   else if (strcmp(txt, NODE_4) == 0) {
     ch_address = IP(192, 168, 5, 24);
-    port_to_send = NODE4_PORT;
   }
   else if (strcmp(txt, NODE_5) == 0) {
     ch_address = IP(192, 168, 5, 25);
-    port_to_send = NODE5_PORT;
   }
   else if (strcmp(txt, NODE_6) == 0) {
     ch_address = IP(192, 168, 5, 26);
-    port_to_send = NODE6_PORT;
   }
   ch_address.toString();
   Serial.println(ch_address);
@@ -676,6 +670,8 @@ void wifi_connect(unsigned char CH)
   unsigned short adc;
   char ADC_string[5];
 
+  node_id = create_node_id();
+
   switch (CH) {
     
     case  NODE:
@@ -692,7 +688,7 @@ void wifi_connect(unsigned char CH)
 
       WiFi.mode(WIFI_AP_STA);
       WiFi.disconnect();
-      node_id = create_node_id();
+
       WiFi.softAPConfig(IPAddress(apIP), IPAddress(apIP), subnet);
       WiFi.softAP(node_id, NODE_PASS);
       delay(1000);

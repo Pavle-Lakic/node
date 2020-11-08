@@ -93,14 +93,6 @@
 /** MAC address of node which name will be Node 6.*/
 #define MAC_NODE_6                "macnode6"
 
-#define NODE0_PORT                 3000
-#define NODE1_PORT                 3001
-#define NODE2_PORT                 3002
-#define NODE3_PORT                 3003
-#define NODE4_PORT                 3004
-#define NODE5_PORT                 3005
-#define NODE6_PORT                 3006
-
 #define ADC_PIN                   A0
 
 /** Port where broadcast data will be sent*/
