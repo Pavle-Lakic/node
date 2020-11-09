@@ -96,8 +96,30 @@
 /** Analog input pin.*/
 #define ADC_PIN                   A0
 
+/** Time for how long will CH/node wait response for node/CH in miliseconds.*/
+#define WAIT_FOR_NODES_TIMEOUT    15000
+
+/** Time for how long will node wait for cluster heads to set up their AP`s.*/
+#define WAIT_FOR_CHS_TIMEOUT      3000
+
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
+
+/** Period after cycle will begin again in milliseconds.*/
+#define PERIOD                    60000
+
+#define THIS_LONG_SLEEP           5000
+
+/**  
+ * @brief Time for how long node/CH will sleep before
+ * beggining new cycle. This function should be called
+ * after each successful transim of UDP message to base
+ * station.
+ * @param Current time in miliseconds.
+ * @return Time for how long it will sleep in microseconds.
+ * 
+ */
+unsigned long time_to_sleep(unsigned long a);
 
 /**  
  * @brief Checkes if SSID is valid or not. Valid SSID`s

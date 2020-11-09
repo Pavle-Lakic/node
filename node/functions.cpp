@@ -37,17 +37,16 @@ IPAddress ch_address;
 /**This node name.*/
 char node_name[10];
 
-volatile unsigned char timeout_udp_flag = 0;
-
 /** Strongest valid network.*/
 String strongest;
 
 /** Access point IP.*/
 uint32_t apIP;
 
-Ticker timeout;
+/** This variable holds time when cycle started in miliseconds.*/
+unsigned long cycle_start;
+
 WiFiUDP Udp;
-WiFiUDP CH_udp;
 
 #if DEBUG
 void print_connected(void)
@@ -91,6 +90,18 @@ void print_connected(void)
     }
 }
 #endif
+
+unsigned long time_to_sleep(unsigned long a)
+{
+  unsigned long ret = 0;
+  unsigned long diff_us;
+
+  diff_us = a - cycle_start;
+
+  ret = PERIOD - diff_us;
+
+  return ret;
+}
 
 unsigned short read_adc(void)
 {
@@ -281,7 +292,7 @@ unsigned char scan_nodes(void)
   Serial.println("Try modem sleep here.");
 #endif
 
-  delay(15000);
+  delay(WAIT_FOR_NODES_TIMEOUT);
 
   number_of_nodes = wifi_softap_get_station_num();
   stat_info = wifi_softap_get_station_info();
@@ -365,6 +376,7 @@ void wait_for_nodes(unsigned char nodes)
   unsigned short adc;
   char ADC_string[5];
   unsigned long timeout = millis();
+  unsigned long sleep_time;
 
   accumulateBuffer[0] = '\0';
   
@@ -383,7 +395,7 @@ void wait_for_nodes(unsigned char nodes)
 
     yield(); // needed or WDT will triger reset.
 
-    if((millis() - timeout) > 15000) {
+    if((millis() - timeout) > WAIT_FOR_NODES_TIMEOUT) {
       timed_out = true;
     }
     else {
@@ -431,11 +443,28 @@ void wait_for_nodes(unsigned char nodes)
   if(timed_out == true) {
 
 #if DEBUG
-    Serial.println("Timed out, restarting ...");
+    Serial.println("Timed out, sending just my value ...");
 #endif
+    WiFi.disconnect();
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(BASE_SSID, BASE_PASS);
 
-    ESP.restart();
-    // or deep sleep once available ...
+#if DEBUG
+    Serial.println("Connecting to base!");
+#endif
+     
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+    }
+
+    adc = read_adc();
+    sprintf(ADC_string, "%hu", adc);
+
+    Udp.beginPacket(base_station, BROADCAST_PORT);
+    Udp.write(node_name);
+    Udp.write(":");
+    Udp.write(ADC_string);
+    Udp.endPacket();
   }
   else if (received_from_all == true) {
 
@@ -469,6 +498,21 @@ void wait_for_nodes(unsigned char nodes)
     Udp.write(accumulateBuffer);
     Udp.endPacket();
   }
+
+    sleep_time = time_to_sleep(millis());
+
+#if DEBUG
+    Serial.print("Going to sleep for: ");
+    Serial.print(sleep_time);
+    Serial.println(" milliseconds!");
+#endif
+
+    //delay(500);
+    //WiFi.forceSleepBegin();
+    delay(sleep_time);
+    //WiFi.forceSleepWake();
+    //ESP.deepSleep(sleep_time);
+  
 }
 
 void advertise(unsigned char CH)
@@ -479,6 +523,7 @@ void advertise(unsigned char CH)
   char ADC_string[5];
   unsigned char send_time;
   unsigned char number_of_nodes;
+  unsigned long sleep_time;
 
   adc = read_adc();
   sprintf(ADC_string, "%hu", adc);
@@ -504,12 +549,14 @@ void advertise(unsigned char CH)
        Serial.println(WiFi.SSID());
        Serial.print("My IP address is : ");
        Serial.println(WiFi.localIP());
+       Serial.println(strongest.c_str());
 #endif
-
-       get_ch_address(WiFi.SSID().c_str());
 
        if (strcmp(strongest.c_str(), BASE_SSID) == 0) {
 
+#if DEBUG
+        Serial.println("Base is strongest");
+#endif
         adc = read_adc();
         sprintf(ADC_string, "%hu", adc);
         
@@ -520,11 +567,9 @@ void advertise(unsigned char CH)
         Udp.endPacket();
        }
        else {
+        get_ch_address(WiFi.SSID().c_str());
         wait_for_CH();
        }
-
-    // wait for response of CH for when node should
-    // send ADC value and sleep.
     break;
 
     case CLUSTER_HEAD:
@@ -544,7 +589,7 @@ void advertise(unsigned char CH)
      
         while (WiFi.status() != WL_CONNECTED) {
           delay(1000);
-        
+        }
 
         adc = read_adc();
         sprintf(ADC_string, "%hu", adc);
@@ -554,9 +599,22 @@ void advertise(unsigned char CH)
         Udp.write(":");
         Udp.write(ADC_string);
         Udp.endPacket();
+
+        sleep_time = time_to_sleep(millis());
+
+#if DEBUG
+      Serial.print("Going to sleep for: ");
+      Serial.print(sleep_time);
+      Serial.println(" miliseconds!");
+#endif
+
+   //WiFi.forceSleepBegin();
+    delay(sleep_time);
+    //WiFi.forceSleepWake();
+    
+      //ESP.deepSleep(sleep_time);
       }
       break;
-    }
   }
 }
 
@@ -572,6 +630,7 @@ void wait_for_CH (void)
     unsigned char sleep_time;
     unsigned short adc;
     char ADC_string[5];
+    unsigned long sleeping_time;
 
     CH_NAME[6] = '\0';
 
@@ -630,7 +689,7 @@ void wait_for_CH (void)
           sleep_time = (unsigned char)strtol(SLEEP_STRING, &ptr, 10);
 
 #if DEBUG
-          Serial.print("Got message from CH and i should go to sleep for ");
+          Serial.print("Got message from CH and i should send my adc in");
           Serial.print(sleep_time);
           Serial.println(" seconds.");
 #endif    
@@ -646,7 +705,7 @@ void wait_for_CH (void)
     }
 
     if ((received == false) || (time_out == true)) {
-      ESP.restart();
+      //ESP.restart();
     }
     else {
     //maybe just sleep instead of restart.
@@ -678,6 +737,17 @@ void wait_for_CH (void)
           Serial.println("Packet sent, should go deep sleep now ...");
 #endif
     }
+    sleeping_time = time_to_sleep(millis());
+
+#if DEBUG
+      Serial.print("Going to sleep for: ");
+      Serial.print(sleeping_time);
+      Serial.println(" milliseconds!");
+#endif
+
+    //WiFi.forceSleepBegin();
+    delay(sleeping_time);
+    //WiFi.forceSleepWake();
 }
 
 void wifi_connect(unsigned char CH)
@@ -699,7 +769,7 @@ void wifi_connect(unsigned char CH)
       WiFi.mode(WIFI_STA);
       WiFi.disconnect();
       // wait for CH to create AP.
-      delay(3000);
+      delay(WAIT_FOR_CHS_TIMEOUT);
       advertise(CH);
 
     break;
@@ -733,7 +803,7 @@ void wifi_connect(unsigned char CH)
 }
 
 void full_circle(unsigned char *round_cnt, unsigned char *ch_enable)
-{
+{ 
   *round_cnt += 1;
   if (*round_cnt > NUMBER_OF_NODES - 1)
   {
@@ -754,6 +824,8 @@ unsigned char cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
   float rnd_nmb;
   float threshold;
   unsigned char ret;
+
+  cycle_start = millis();
 
   rnd_nmb = random_number();
   threshold = calculate_threshold(P, *round_cnt);
