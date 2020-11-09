@@ -17,7 +17,7 @@ const char *filename = "/conf.txt";
 
 /** Probability that node will be cluster head for current round.
  *  Determined apriori, depends of number of nodes.*/
-const float P = 0.5;
+const float P = 0.33;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -31,19 +31,18 @@ const IPAddress subnet(255,255,255,0);
 /** Gateway address*/
 const IPAddress gateway(192,168,5,1);
 
+/**Cluster head address which node is connected to*/
 IPAddress ch_address;
 
 /**This node name.*/
 char node_name[10];
 
-unsigned short port_to_send;
-
-unsigned short port_to_receive;
-
 volatile unsigned char timeout_udp_flag = 0;
 
+/** Strongest valid network.*/
 String strongest;
 
+/** Access point IP.*/
 uint32_t apIP;
 
 Ticker timeout;
@@ -359,11 +358,13 @@ void get_ch_address(const char *txt)
 void wait_for_nodes(unsigned char nodes)
 {
   bool received_from_all = false;
+  bool timed_out = false;
   unsigned char i = 0;
   char packetBuffer[255];
   char accumulateBuffer[255];
   unsigned short adc;
   char ADC_string[5];
+  unsigned long timeout = millis();
 
   accumulateBuffer[0] = '\0';
   
@@ -378,9 +379,16 @@ void wait_for_nodes(unsigned char nodes)
   Serial.println(WiFi.softAPIP());
 #endif
 
-  while(!received_from_all) {
+  while(!received_from_all && !timed_out) {
 
     yield(); // needed or WDT will triger reset.
+
+    if((millis() - timeout) > 15000) {
+      timed_out = true;
+    }
+    else {
+      timed_out = false;
+    }
 
     int packetSize = Udp.parsePacket();
 
@@ -409,7 +417,7 @@ void wait_for_nodes(unsigned char nodes)
 #endif
 
       strcat(accumulateBuffer, packetBuffer);
-      //strcat(accumulateBuffer, "\n");
+      strcat(accumulateBuffer, "\n\r");
 
       if (i == nodes) {
         received_from_all = true;
@@ -420,36 +428,47 @@ void wait_for_nodes(unsigned char nodes)
     
     }
   }
+  if(timed_out == true) {
 
 #if DEBUG
-  Serial.println("Received from all nodes !");
+    Serial.println("Timed out, restarting ...");
 #endif
 
-  WiFi.disconnect();
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(BASE_SSID, BASE_PASS);
+    ESP.restart();
+    // or deep sleep once available ...
+  }
+  else if (received_from_all == true) {
 
 #if DEBUG
-  Serial.println("Connecting to base!");
+    Serial.println("Received from all nodes !");
+#endif
+
+    WiFi.disconnect();
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(BASE_SSID, BASE_PASS);
+
+#if DEBUG
+    Serial.println("Connecting to base!");
 #endif
      
-  while (WiFi.status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED) {
         delay(500);
-      }
+    }
 
 #if DEBUG
-  Serial.println("Acumulate from nodes and send ...");
+    Serial.println("Acumulate from nodes and send ...");
 #endif
 
-  adc = read_adc();
-  sprintf(ADC_string, "%hu", adc);
-  strcat(accumulateBuffer, node_name);
-  strcat(accumulateBuffer, ":");
-  strcat(accumulateBuffer, ADC_string);
+    adc = read_adc();
+    sprintf(ADC_string, "%hu", adc);
+    strcat(accumulateBuffer, node_name);
+    strcat(accumulateBuffer, ":");
+    strcat(accumulateBuffer, ADC_string);
 
-  Udp.beginPacket(base_station, BROADCAST_PORT);
-  Udp.write(accumulateBuffer);
-  Udp.endPacket();
+    Udp.beginPacket(base_station, BROADCAST_PORT);
+    Udp.write(accumulateBuffer);
+    Udp.endPacket();
+  }
 }
 
 void advertise(unsigned char CH)
@@ -541,13 +560,12 @@ void advertise(unsigned char CH)
   }
 }
 
-unsigned char wait_for_CH (void)
+void wait_for_CH (void)
 {
     char packetBuffer[255];
-    //unsigned long tick = millis();
+    unsigned long tick = millis();
     boolean time_out = false;
     boolean received = false;
-    unsigned char ret = 0;
     char *ptr;
     char CH_NAME[7];
     char SLEEP_STRING[2];
@@ -562,17 +580,16 @@ unsigned char wait_for_CH (void)
 #if DEBUG
     Serial.println("Waiting for CH ...");
 #endif
-
-    //while (!time_out && !received) 
-    while (!received) {
+ 
+    while (!time_out && !received) {
 
       yield(); // needed or WDT will triger reset.
 
       int packetSize = Udp.parsePacket();
 
-//      if((millis() - tick) > 10000) {
-//        time_out = true;
-//      }
+      if((millis() - tick) > 15000) {
+        time_out = true;
+      }
   
       if (packetSize) {
 
@@ -619,16 +636,20 @@ unsigned char wait_for_CH (void)
 #endif    
 
           received = true;
-          ret = sleep_time;
         }
         else {
           received = false;
-          ret = 0;
         }
         
       }
      }
     }
+
+    if ((received == false) || (time_out == true)) {
+      ESP.restart();
+    }
+    else {
+    //maybe just sleep instead of restart.
 
 #if DEBUG
           Serial.println("In future try modem sleep.");
@@ -656,8 +677,7 @@ unsigned char wait_for_CH (void)
 #if DEBUG
           Serial.println("Packet sent, should go deep sleep now ...");
 #endif
-    
-      return ret;
+    }
 }
 
 void wifi_connect(unsigned char CH)

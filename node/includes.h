@@ -28,7 +28,7 @@
 #define ROUND_RESET               0
 
 /**Maximum number of nodes in network*/
-#define NUMBER_OF_NODES           2
+#define NUMBER_OF_NODES           3
 
 /** String length for round to be writen to filesystem.*/
 #define ROUND_NUMBER_LENGTH       2
@@ -93,29 +93,75 @@
 /** MAC address of node which name will be Node 6.*/
 #define MAC_NODE_6                "macnode6"
 
+/** Analog input pin.*/
 #define ADC_PIN                   A0
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
 
-enum Node {
-  NODE0,
-  NODE1,
-  NODE2,
-  NODE3,
-  NODE4,
-  NODE5,
-  NODE6
-};
-
+/**  
+ * @brief Checkes if SSID is valid or not. Valid SSID`s
+ * are only ones defining network of nodes (NODE_0, NODE_1 ...)
+ * and with BASE_SSID. Rest are declared as not valid, and will
+ * not participate in LEACH protocol
+ * @param SSID to be checked.
+ * @return 0 - invalid network, 1 - valid network.
+ * 
+ */
 unsigned char check_ch( const char * txt);
-unsigned char wait_for_CH (void);
+
+
+/**  
+ * @brief Node blockes here, waiting for CH`s UDP message
+ * containing nodes name, and value for how long node will
+ * wait before sending back its ADC value to the CH.
+ * All nodes listen to BROADCAST_PORT, but will only take
+ * the messages declared to them.
+ * @param none.
+ * @return none.
+ * 
+ */
+void wait_for_CH (void);
+
+/**  
+ * @brief Scan`s for WiFi SSID`s, findes the strongest
+ * among them, and if valid copies its name to global
+ * variable.
+ * @param none.
+ * @return none.
+ * 
+ */
 void strongest_ch_ssid(void);
+
+/**  
+ * @brief Scanes for nodes connected to CH.
+ * @param none.
+ * @return Number of nodes connected to CH.
+ * 
+ */
 unsigned char scan_nodes(void);
+
+/**  
+ * @brief Compares names of nodes and their MAC addresses.
+ * Also sends UDP message to node, which contains node name
+ * and time for how long it will sleep.
+ * @param MAC address of node connected to CH.
+ * @return none.
+ * 
+ */
 void decrypt_node(char *txt);
+
+/**  
+ * @brief This function call will get IP address of CH
+ * which node is connected to.
+ * @param Name of cluster head which node is connected to.
+ * @return none.
+ * 
+ */
 void get_ch_address(const char *txt);
 
-/** * @brief Will print connected networks with IP`s and MAC`s
+/**  
+ *  @brief Will print connected networks with IP`s and MAC`s
  *  to this node, if node is in AP mode. Also needed to uncomment
  *  it
  * @param none.
