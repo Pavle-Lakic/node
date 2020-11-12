@@ -91,6 +91,24 @@ void print_connected(void)
 }
 #endif
 
+void sleeping_time(void)
+{
+    unsigned long sleep_time;
+  
+    sleep_time = time_to_sleep(millis());
+
+#if DEBUG
+      Serial.print("Going to sleep for: ");
+      Serial.print(sleep_time);
+      Serial.println(" milliseconds!");
+#endif
+
+    //WiFi.forceSleepBegin();
+    //delay(sleeping_time);
+    ESP.deepSleep(sleep_time * 1000, WAKE_RF_DEFAULT);
+    //WiFi.forceSleepWake();  
+}
+
 unsigned long time_to_sleep(unsigned long a)
 {
   unsigned long ret = 0;
@@ -440,37 +458,18 @@ void wait_for_nodes(unsigned char nodes)
     
     }
   }
+
+#if DEBUG
   if(timed_out == true) {
-
-#if DEBUG
-    Serial.println("Timed out, sending just my value ...");
-#endif
-    WiFi.disconnect();
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(BASE_SSID, BASE_PASS);
-
-#if DEBUG
-    Serial.println("Connecting to base!");
-#endif
-     
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-    }
-
-    adc = read_adc();
-    sprintf(ADC_string, "%hu", adc);
-
-    Udp.beginPacket(base_station, BROADCAST_PORT);
-    Udp.write(node_name);
-    Udp.write(":");
-    Udp.write(ADC_string);
-    Udp.endPacket();
+    Serial.println("Timed ou while waiting for nodes to send their data, should send just my value");
   }
   else if (received_from_all == true) {
-
-#if DEBUG
-    Serial.println("Received from all nodes !");
-#endif
+    Serial.println("Received from all nodes! Should accumulate with my adc value and send.");
+  }
+  else {
+    Serial.println("No nodes are connected to me, should just send my value.");    
+  }
+#endif  
 
     WiFi.disconnect();
     WiFi.mode(WIFI_STA);
@@ -484,35 +483,24 @@ void wait_for_nodes(unsigned char nodes)
         delay(500);
     }
 
-#if DEBUG
-    Serial.println("Acumulate from nodes and send ...");
-#endif
+    Udp.beginPacket(base_station, BROADCAST_PORT);
 
     adc = read_adc();
     sprintf(ADC_string, "%hu", adc);
-    strcat(accumulateBuffer, node_name);
-    strcat(accumulateBuffer, ":");
-    strcat(accumulateBuffer, ADC_string);
-
-    Udp.beginPacket(base_station, BROADCAST_PORT);
-    Udp.write(accumulateBuffer);
-    Udp.endPacket();
-  }
-
-    sleep_time = time_to_sleep(millis());
-
-#if DEBUG
-    Serial.print("Going to sleep for: ");
-    Serial.print(sleep_time);
-    Serial.println(" milliseconds!");
-#endif
-
-    //delay(500);
-    //WiFi.forceSleepBegin();
-    delay(sleep_time);
-    //WiFi.forceSleepWake();
-    //ESP.deepSleep(sleep_time);
   
+    if (received_from_all == true) {
+      strcat(accumulateBuffer, node_name);
+      strcat(accumulateBuffer, ":");
+      strcat(accumulateBuffer, ADC_string);
+      Udp.write(accumulateBuffer);
+    }
+    else {
+      Udp.write(node_name);
+      Udp.write(":");
+      Udp.write(ADC_string);
+    }
+
+    Udp.endPacket();
 }
 
 void advertise(unsigned char CH)
@@ -588,7 +576,7 @@ void advertise(unsigned char CH)
 #endif
      
         while (WiFi.status() != WL_CONNECTED) {
-          delay(1000);
+          delay(500);
         }
 
         adc = read_adc();
@@ -599,20 +587,6 @@ void advertise(unsigned char CH)
         Udp.write(":");
         Udp.write(ADC_string);
         Udp.endPacket();
-
-        sleep_time = time_to_sleep(millis());
-
-#if DEBUG
-      Serial.print("Going to sleep for: ");
-      Serial.print(sleep_time);
-      Serial.println(" miliseconds!");
-#endif
-
-   //WiFi.forceSleepBegin();
-    delay(sleep_time);
-    //WiFi.forceSleepWake();
-    
-      //ESP.deepSleep(sleep_time);
       }
       break;
   }
@@ -627,10 +601,9 @@ void wait_for_CH (void)
     char *ptr;
     char CH_NAME[7];
     char SLEEP_STRING[2];
-    unsigned char sleep_time;
+    unsigned char delay_time;
     unsigned short adc;
     char ADC_string[5];
-    unsigned long sleeping_time;
 
     CH_NAME[6] = '\0';
 
@@ -686,11 +659,11 @@ void wait_for_CH (void)
           Serial.println("CH_NAME = node_name");
 #endif
 
-          sleep_time = (unsigned char)strtol(SLEEP_STRING, &ptr, 10);
+          delay_time = (unsigned char)strtol(SLEEP_STRING, &ptr, 10);
 
 #if DEBUG
           Serial.print("Got message from CH and i should send my adc in");
-          Serial.print(sleep_time);
+          Serial.print(delay_time);
           Serial.println(" seconds.");
 #endif    
 
@@ -699,7 +672,6 @@ void wait_for_CH (void)
         else {
           received = false;
         }
-        
       }
      }
     }
@@ -714,7 +686,7 @@ void wait_for_CH (void)
           Serial.println("In future try modem sleep.");
 #endif
 
-          delay(sleep_time * 1000);
+          delay(delay_time * 1000);
 
 #if DEBUG
           Serial.print("Sending packet to CH =  ");
@@ -737,17 +709,7 @@ void wait_for_CH (void)
           Serial.println("Packet sent, should go deep sleep now ...");
 #endif
     }
-    sleeping_time = time_to_sleep(millis());
 
-#if DEBUG
-      Serial.print("Going to sleep for: ");
-      Serial.print(sleeping_time);
-      Serial.println(" milliseconds!");
-#endif
-
-    //WiFi.forceSleepBegin();
-    delay(sleeping_time);
-    //WiFi.forceSleepWake();
 }
 
 void wifi_connect(unsigned char CH)

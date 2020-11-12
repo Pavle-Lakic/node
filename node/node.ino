@@ -46,7 +46,9 @@ void loop()
     }
 
   wifi_connect(CH);
-  full_circle(&round_cnt, &ch_enable);  
+  full_circle(&round_cnt, &ch_enable);
+  delay(500); // need some time so udp packets can be sent.
+  sleeping_time();
 
 #if ROUND_RESET    
     write_fs(0, 1);

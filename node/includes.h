@@ -110,6 +110,7 @@
 
 #define THIS_LONG_SLEEP           5000
 
+void sleeping_time(void);
 /**  
  * @brief Time for how long node/CH will sleep before
  * beggining new cycle. This function should be called
