@@ -240,7 +240,7 @@ unsigned char check_ch( const char *txt)
     (strcmp(txt, NODE_0) == 0) || (strcmp(txt, NODE_1) == 0) ||
     (strcmp(txt, NODE_2) == 0) || (strcmp(txt, NODE_3) == 0) ||
     (strcmp(txt, NODE_4) == 0) || (strcmp(txt, NODE_5) == 0) ||
-    (strcmp(txt, BASE_SSID) == 0)
+    (strcmp(txt, NODE_6) == 0) || (strcmp(txt, BASE_SSID) == 0)
     ) {
     ret = 1;
   }
@@ -620,6 +620,11 @@ void wait_for_CH (void)
       int packetSize = Udp.parsePacket();
 
       if((millis() - tick) > 15000) {
+        
+#if DEBUG
+      Serial.println("Timed out while waiting for CH!");
+#endif
+
         time_out = true;
       }
   
@@ -742,7 +747,7 @@ void wifi_connect(unsigned char CH)
       WiFi.disconnect();
 
       WiFi.softAPConfig(IPAddress(apIP), IPAddress(apIP), subnet);
-      WiFi.softAP(node_id, NODE_PASS);
+      WiFi.softAP(node_id, NODE_PASS, WIFI_CHANNEL, false, MAX_CONNECTED);
       delay(1000);
 
 #if DEBUG
