@@ -385,7 +385,9 @@ void wait_for_nodes(unsigned char nodes)
 {
   bool received_from_all = false;
   bool timed_out = false;
+  bool timed_out_base = false;
   unsigned char i = 0;
+  unsigned short k = 0;
   char packetBuffer[255];
   char accumulateBuffer[255];
   unsigned short adc;
@@ -476,8 +478,22 @@ void wait_for_nodes(unsigned char nodes)
     Serial.println("Connecting to base!");
 #endif
      
-    while (WiFi.status() != WL_CONNECTED) {
+    while (WiFi.status() != WL_CONNECTED && !timed_out_base) {
+
+      if(k == 20) {
+
+#if DEBUG
+        Serial.println("Timed out while waiting for to connect to base!");
+        Serial.println("Going to deep sleep ...");
+#endif
+        timed_out_base = true;
+      }
         delay(500);
+        k += 1;
+    }
+
+    if (timed_out_base == true) {
+      sleeping_time();
     }
 
     Udp.beginPacket(base_station, BROADCAST_PORT);
@@ -541,6 +557,10 @@ void advertise(unsigned char CH)
         i += 1;
       }
 
+      if (timed_out == true) {
+        sleeping_time();
+      }
+
 #if DEBUG
        Serial.print("Connected to: ");
        Serial.println(WiFi.SSID());
@@ -598,7 +618,9 @@ void advertise(unsigned char CH)
           i += 1;
         }
 
-        sleeping_time();
+        if (timed_out == true) {
+          sleeping_time();
+        }
 
         adc = read_adc();
         sprintf(ADC_string, "%hu", adc);
