@@ -256,32 +256,32 @@ void decrypt_node(char *txt)
   if (strcmp(txt, MAC_NODE_0) == 0) {
     Udp.write(NODE_0);
     Udp.write(": ");
-    Udp.write("9"); 
+    Udp.write("3"); 
   }
   else if (strcmp(txt, MAC_NODE_1) == 0) {
     Udp.write(NODE_1);
     Udp.write(": ");
-    Udp.write("9");
+    Udp.write("4");
   }
   else if (strcmp(txt, MAC_NODE_2) == 0) {
     Udp.write(NODE_2);
     Udp.write(": ");
-    Udp.write("9");
+    Udp.write("5");
   }
   else if (strcmp(txt, MAC_NODE_3) == 0) {
     Udp.write(NODE_3);
     Udp.write(": ");
-    Udp.write("9");
+    Udp.write("6");
   }
   else if (strcmp(txt, MAC_NODE_4) == 0) {
     Udp.write(NODE_4);
     Udp.write(": ");
-    Udp.write("9");
+    Udp.write("7");
   }
   else if (strcmp(txt, MAC_NODE_5) == 0) {
     Udp.write(NODE_5);
     Udp.write(": ");
-    Udp.write("9");
+    Udp.write("8");
   }
   else if (strcmp(txt, MAC_NODE_6) == 0) {
     Udp.write(NODE_6);
@@ -503,12 +503,14 @@ void wait_for_nodes(unsigned char nodes)
 void advertise(unsigned char CH)
 {
   bool received = false;
+  bool timed_out = false;
   char packetBuffer[255];
   unsigned short adc;
   char ADC_string[5];
   unsigned char send_time;
   unsigned char number_of_nodes;
   unsigned long sleep_time;
+  unsigned short i = 0;
 
   adc = read_adc();
   sprintf(ADC_string, "%hu", adc);
@@ -525,8 +527,18 @@ void advertise(unsigned char CH)
      
       WiFi.begin(strongest, NODE_PASS);
 
-      while (WiFi.status() != WL_CONNECTED) {
+      while (WiFi.status() != WL_CONNECTED && !timed_out) {
+
+        if ( i == 20) {
+#if DEBUG
+          Serial.println("Could not connect to strongest network for 10 seconds!");
+          Serial.println("Going to deep sleep ...");
+#endif
+          timed_out = true;
+        }
+
         delay(500);
+        i += 1;
       }
 
 #if DEBUG
@@ -572,9 +584,21 @@ void advertise(unsigned char CH)
         Serial.println("Connecting to base!");
 #endif
      
-        while (WiFi.status() != WL_CONNECTED) {
+        while (WiFi.status() != WL_CONNECTED && !timed_out) {
+          if ( i == 20 ) {
+
+#if DEBUG
+            Serial.println("Could not connect for 10 seconds to base station!");
+            Serial.println("Going to deep sleep ...");
+#endif
+
+            timed_out = true;
+          }
           delay(500);
+          i += 1;
         }
+
+        sleeping_time();
 
         adc = read_adc();
         sprintf(ADC_string, "%hu", adc);
