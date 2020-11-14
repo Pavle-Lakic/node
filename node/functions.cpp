@@ -17,7 +17,7 @@ const char *filename = "/conf.txt";
 
 /** Probability that node will be cluster head for current round.
  *  Determined apriori, depends of number of nodes.*/
-const float P = 0.33;
+const float P = 0.25;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -103,10 +103,7 @@ void sleeping_time(void)
       Serial.println(" milliseconds!");
 #endif
 
-    //WiFi.forceSleepBegin();
-    //delay(sleeping_time);
     ESP.deepSleep(sleep_time * 1000, WAKE_RF_DEFAULT);
-    //WiFi.forceSleepWake();  
 }
 
 unsigned long time_to_sleep(unsigned long a)
@@ -685,7 +682,6 @@ void wait_for_CH (void)
       //ESP.restart();
     }
     else {
-    //maybe just sleep instead of restart.
 
 #if DEBUG
           Serial.println("In future try modem sleep.");
@@ -723,7 +719,6 @@ void wifi_connect(unsigned char CH)
   String strongest;
   int power;
   const char *node_id;
-  char  ReplyBuffer[] = "acknowledged\r\n";
   unsigned short adc;
   char ADC_string[5];
 
@@ -758,7 +753,7 @@ void wifi_connect(unsigned char CH)
       Serial.println();
       Serial.print("Connected to ");
       Serial.println(WiFi.SSID());
-      Serial.print("IP address:\t");
+      Serial.print("IP address:");
       Serial.println(WiFi.localIP());
       Serial.println("I`m CH for this round");
 #endif

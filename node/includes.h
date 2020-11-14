@@ -28,7 +28,7 @@
 #define ROUND_RESET               0
 
 /**Maximum number of nodes in network*/
-#define NUMBER_OF_NODES           3
+#define NUMBER_OF_NODES           4
 
 /** String length for round to be writen to filesystem.*/
 #define ROUND_NUMBER_LENGTH       2
@@ -106,7 +106,7 @@
 #define WAIT_FOR_NODES_TIMEOUT    15000
 
 /** Time for how long will node wait for cluster heads to set up their AP`s.*/
-#define WAIT_FOR_CHS_TIMEOUT      3000
+#define WAIT_FOR_CHS_TIMEOUT      4
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
@@ -114,9 +114,14 @@
 /** Period after cycle will begin again in milliseconds.*/
 #define PERIOD                    60000
 
-#define THIS_LONG_SLEEP           5000
-
+/**  
+ * @brief Calculates for how long node will be in deep sleep
+ * @param none.
+ * @return none.
+ * 
+ */
 void sleeping_time(void);
+
 /**  
  * @brief Time for how long node/CH will sleep before
  * beggining new cycle. This function should be called
