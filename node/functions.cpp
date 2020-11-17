@@ -17,7 +17,7 @@ const char *filename = "/conf.txt";
 
 /** Probability that node will be cluster head for current round.
  *  Determined apriori, depends of number of nodes.*/
-const float P = 0.25;
+const float P = 0.14;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -843,14 +843,13 @@ unsigned char cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
     ret = 1;
   }
   else {
-    *ch_enable = 1;
     ret = 0;
   }
 
   write_fs(*round_cnt, *ch_enable);
 
 #if DEBUG
-  if (*ch_enable == 0) {
+  if (ret == 1) {
     Serial.println("Node will be cluster head for current round.");
   }
   else {

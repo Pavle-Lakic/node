@@ -3,7 +3,7 @@
  *  
  *  This file represents baremetal implementation 
  *  of node for LEACH protocol
- *  
+ *   
  *  @author Pavle Lakic
  *  @bug No known bugs
  */
@@ -25,10 +25,7 @@ void setup()
   Serial.println(WiFi.macAddress());
 #endif
 
-}
-void loop() 
-{
-    if (mount_fs()) {
+  if (mount_fs()) {
 
 #if ROUND_RESET    
     write_fs(0, 1);
@@ -60,4 +57,9 @@ void loop()
   unsigned char ch_en;
   read_fs(&rnd_cnt, &ch_en);
 #endif
+
+}
+void loop() 
+{
+
 }

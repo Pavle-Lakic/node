@@ -28,7 +28,7 @@
 #define ROUND_RESET               0
 
 /**Maximum number of nodes in network*/
-#define NUMBER_OF_NODES           4
+#define NUMBER_OF_NODES           7
 
 /** String length for round to be writen to filesystem.*/
 #define ROUND_NUMBER_LENGTH       2
@@ -106,7 +106,7 @@
 #define WAIT_FOR_NODES_TIMEOUT    15000
 
 /** Time for how long will node wait for cluster heads to set up their AP`s.*/
-#define WAIT_FOR_CHS_TIMEOUT      4
+#define WAIT_FOR_CHS_TIMEOUT      6000
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
@@ -115,7 +115,7 @@
 #define PERIOD                    60000
 
 /**  
- * @brief Calculates for how long node will be in deep sleep
+ * @brief Calculates for how long node will be in deep sleep.
  * @param none.
  * @return none.
  * 
