@@ -17,7 +17,7 @@ const char *filename = "/conf.txt";
 
 /** Probability that node will be cluster head for current round.
  *  Determined apriori, depends of number of nodes.*/
-const float P = 0.14;
+const float P = 0.25;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -37,6 +37,8 @@ IPAddress ch_address;
 /**This node name.*/
 char node_name[10];
 
+unsigned char number_of_node;
+
 /** Strongest valid network.*/
 String strongest;
 
@@ -45,6 +47,8 @@ uint32_t apIP;
 
 /** This variable holds time when cycle started in miliseconds.*/
 unsigned long cycle_start;
+
+char SLEEP_STRING[10];
 
 WiFiUDP Udp;
 
@@ -90,6 +94,11 @@ void print_connected(void)
     }
 }
 #endif
+
+void start_count(unsigned long a)
+{
+  cycle_start = a;
+}
 
 void sleeping_time(void)
 {
@@ -143,36 +152,43 @@ const char* create_node_id (void)
     node = NODE_0;
     apIP = IP(192, 168, 5, 20);
     strncpy(node_name, NODE_0, sizeof(NODE_0));
+    number_of_node = NODE0;
   }
   else if (mac_address == MAC_NODE_1) {
     node = NODE_1;
     apIP = IP(192, 168, 5, 21);
     strncpy(node_name, NODE_1, sizeof(NODE_1));
+    number_of_node = NODE1;
   }
   else if (mac_address == MAC_NODE_2) {
     node = NODE_2;
     apIP = IP(192, 168, 5, 22);
     strncpy(node_name, NODE_2, sizeof(NODE_2));
+    number_of_node = NODE2;
   }
   else if (mac_address == MAC_NODE_3) {
     node = NODE_3;
     apIP = IP(192, 168, 5, 23);
     strncpy(node_name, NODE_3, sizeof(NODE_3));
+    number_of_node = NODE3;
   }
   else if (mac_address == MAC_NODE_4) {
     node = NODE_4;
     apIP = IP(192, 168, 5, 24);
     strncpy(node_name, NODE_4, sizeof(NODE_4));
+    number_of_node = NODE4;
   }
   else if (mac_address == MAC_NODE_5) {
     node = NODE_5;
     apIP = IP(192, 168, 5, 25);
     strncpy(node_name, NODE_5, sizeof(NODE_5));
+    number_of_node = NODE5;
   }
   else if (mac_address == MAC_NODE_6) {
     node = NODE_6;
     apIP = IP(192, 168, 5, 26);
     strncpy(node_name, NODE_6, sizeof(NODE_6));
+    number_of_node = NODE6;
   }
   else {
     node = "New Node!";
@@ -213,7 +229,7 @@ void strongest_ch_ssid(void)
           strongest = WiFi.SSID(i);
 
 #if DEBUG
-        Serial.print(i + 1);
+        Serial.print(i);
         Serial.print(": ");
         Serial.print(WiFi.SSID(i));
         Serial.print(" (");
@@ -249,52 +265,109 @@ unsigned char check_ch( const char *txt)
 
 }
 
+unsigned char message_length(char *txt)
+{
+    unsigned char ret = 0;
+    unsigned short i = 0;
+    
+    while (txt[i] != '\0') {
+        if (txt[i] == 'N') {
+            ret += 1;
+        }
+        i += 1;
+    }
+    
+    return ret;
+}
+
+bool check_if_for_me(char *txt, unsigned short l)
+{
+    char sleep_value[20];
+    //unsigned short node;
+    unsigned short k;
+    unsigned short number;
+    bool ret = false;
+
+    
+  for (int i = 0; i < l; i++) {
+
+    k = 0;
+    while (!isdigit(txt[0])) {
+        txt += 1;
+    }
+
+     number = txt[0] - '0';
+     txt += 2;
+     
+     while (isdigit(txt[0])) {
+        sleep_value[k] = txt[0];
+        k += 1;
+        txt += 1;
+     }
+     sleep_value[k] = '\0';
+     Serial.println(sleep_value);
+
+     if (number == number_of_node) {
+
+      strncpy(SLEEP_STRING, sleep_value, sizeof(sleep_value));
+      ret = true;
+
+#if DEBUG
+     Serial.println("I`m called");
+#endif
+     }
+     
+  }
+
+  return ret;
+}
+
 void decrypt_node(char *txt)
 {
-  Udp.beginPacket(broadcast, BROADCAST_PORT);
+  //Udp.beginPacket(broadcast, BROADCAST_PORT);
 
   if (strcmp(txt, MAC_NODE_0) == 0) {
     Udp.write(NODE_0);
-    Udp.write(": ");
-    Udp.write("3"); 
+    Udp.write(":");
+    Udp.write("3 "); 
   }
   else if (strcmp(txt, MAC_NODE_1) == 0) {
     Udp.write(NODE_1);
-    Udp.write(": ");
-    Udp.write("4");
+    Udp.write(":");
+    Udp.write("4 ");
   }
   else if (strcmp(txt, MAC_NODE_2) == 0) {
     Udp.write(NODE_2);
-    Udp.write(": ");
-    Udp.write("5");
+    Udp.write(":");
+    Udp.write("5 ");
   }
   else if (strcmp(txt, MAC_NODE_3) == 0) {
     Udp.write(NODE_3);
-    Udp.write(": ");
-    Udp.write("6");
+    Udp.write(":");
+    Udp.write("6 ");
   }
   else if (strcmp(txt, MAC_NODE_4) == 0) {
     Udp.write(NODE_4);
-    Udp.write(": ");
-    Udp.write("7");
+    Udp.write(":");
+    Udp.write("7 ");
   }
   else if (strcmp(txt, MAC_NODE_5) == 0) {
     Udp.write(NODE_5);
-    Udp.write(": ");
-    Udp.write("8");
+    Udp.write(":");
+    Udp.write("8 ");
   }
   else if (strcmp(txt, MAC_NODE_6) == 0) {
     Udp.write(NODE_6);
-    Udp.write(": ");
-    Udp.write("9");
+    Udp.write(":");
+    Udp.write("9 ");
   }
 
-  Udp.endPacket();
+ // Udp.endPacket();
 }
 
 unsigned char scan_nodes(void)
 {
-  unsigned char number_of_nodes;
+  unsigned char number_of_nodes = 0;
   struct station_info *stat_info;
   struct ip4_addr *IPaddress;
   char macStr[18] = {0};
@@ -309,7 +382,12 @@ unsigned char scan_nodes(void)
 
   delay(WAIT_FOR_NODES_TIMEOUT);
 
-  number_of_nodes = wifi_softap_get_station_num();
+  number_of_nodes = WiFi.softAPgetStationNum();
+#if DEBUG
+  Serial.print("Number of nodes returned from wifi_softap_get_station_num() = ");
+  Serial.println(number_of_nodes);
+#endif
+  
   stat_info = wifi_softap_get_station_info();
 
   if (stat_info == NULL) {
@@ -321,6 +399,8 @@ unsigned char scan_nodes(void)
 
    }
    else {
+
+    Udp.beginPacket(broadcast, BROADCAST_PORT);
 
     while(stat_info != NULL) {
         
@@ -351,7 +431,9 @@ unsigned char scan_nodes(void)
       }
    }
 
-   return number_of_nodes;
+  Udp.endPacket();
+
+  return number_of_nodes;
 }
 
 void get_ch_address(const char *txt)
@@ -392,7 +474,7 @@ void wait_for_nodes(unsigned char nodes)
   char accumulateBuffer[255];
   unsigned short adc;
   char ADC_string[5];
-  unsigned long timeout = millis();
+  unsigned long timeout;
   unsigned long sleep_time;
 
   accumulateBuffer[0] = '\0';
@@ -407,6 +489,8 @@ void wait_for_nodes(unsigned char nodes)
   Serial.println(WiFi.localIP());
   Serial.println(WiFi.softAPIP());
 #endif
+
+  timeout = millis();  
 
   while(!received_from_all && !timed_out) {
 
@@ -592,6 +676,13 @@ void advertise(unsigned char CH)
     case CLUSTER_HEAD:
 
       number_of_nodes = scan_nodes();
+      
+
+#if DEBUG
+      Serial.print("Number of nodes returned from scan_nodes = ");
+      Serial.println(number_of_nodes);
+#endif
+
       if(number_of_nodes > 0) {
         wait_for_nodes(number_of_nodes);
       }
@@ -638,23 +729,27 @@ void advertise(unsigned char CH)
 void wait_for_CH (void)
 {
     char packetBuffer[255];
-    unsigned long tick = millis();
+    unsigned long tick;
     boolean time_out = false;
     boolean received = false;
     char *ptr;
     char CH_NAME[7];
-    char SLEEP_STRING[2];
     unsigned char delay_time;
     unsigned short adc;
     char ADC_string[5];
+    unsigned short packet_length;
+    boolean for_me = false;
 
     CH_NAME[6] = '\0';
+    SLEEP_STRING[9] = '\0';
 
     Udp.begin(BROADCAST_PORT);
 
 #if DEBUG
     Serial.println("Waiting for CH ...");
 #endif
+
+    tick = millis();
  
     while (!time_out && !received) {
 
@@ -662,7 +757,7 @@ void wait_for_CH (void)
 
       int packetSize = Udp.parsePacket();
 
-      if((millis() - tick) > 15000) {
+      if((millis() - tick) > WAIT_FOR_NODES_TIMEOUT) {
         
 #if DEBUG
       Serial.println("Timed out while waiting for CH!");
@@ -679,6 +774,7 @@ void wait_for_CH (void)
 
         if(strcmp(Udp.remoteIP().toString().c_str(), ch_address.toString().c_str()) == 0) {
 
+
 #if DEBUG
         Serial.println("Received from CH I`m connected to!");
         Serial.printf("Received packet of size %d from %s:%d\n    (to %s:%d, free heap = %d B)\n",
@@ -690,21 +786,21 @@ void wait_for_CH (void)
 
         int n = Udp.read(packetBuffer, UDP_TX_PACKET_MAX_SIZE);
         packetBuffer[n] = '\0';
-        strncpy(CH_NAME, packetBuffer, 6);
-        strncpy(SLEEP_STRING, &packetBuffer[8], 2);
 
 #if DEBUG
-        Serial.print("CH_NAME = ");
-        Serial.println(CH_NAME);
-        Serial.print("SLEEP_STRING = ");
-        Serial.println(SLEEP_STRING);
-        Serial.println(node_name);
+        Serial.println("Contents of packet buffer:");
+        Serial.println(packetBuffer);
 #endif
 
-        if (strcmp(CH_NAME, node_name) == 0) {
+        //strncpy(CH_NAME, packetBuffer, 6);
 
-#if DEBUG
-          Serial.println("CH_NAME = node_name");
+        packet_length = message_length(packetBuffer);
+        for_me = check_if_for_me(packetBuffer, packet_length);
+
+        if (for_me == true) {
+
+#if DEBUG 
+          Serial.println("Message contains for how long i should sleep !");
 #endif
 
           delay_time = (unsigned char)strtol(SLEEP_STRING, &ptr, 10);
@@ -724,10 +820,7 @@ void wait_for_CH (void)
      }
     }
 
-    if ((received == false) || (time_out == true)) {
-      //ESP.restart();
-    }
-    else {
+    if (received == true) {
 
 #if DEBUG
           Serial.println("In future try modem sleep.");
@@ -789,7 +882,6 @@ void wifi_connect(unsigned char CH)
 
       WiFi.softAPConfig(IPAddress(apIP), IPAddress(apIP), subnet);
       WiFi.softAP(node_id, NODE_PASS, WIFI_CHANNEL, false, MAX_CONNECTED);
-      delay(1000);
 
 #if DEBUG
       Serial.print("node_id = ");
@@ -797,9 +889,6 @@ void wifi_connect(unsigned char CH)
       Serial.print("AP IP address: ");
       Serial.print(WiFi.softAPIP());
       Serial.println();
-      Serial.print("Connected to ");
-      Serial.println(WiFi.SSID());
-      Serial.print("IP address:");
       Serial.println(WiFi.localIP());
       Serial.println("I`m CH for this round");
 #endif
@@ -832,8 +921,6 @@ unsigned char cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
   float rnd_nmb;
   float threshold;
   unsigned char ret;
-
-  cycle_start = millis();
 
   rnd_nmb = random_number();
   threshold = calculate_threshold(P, *round_cnt);

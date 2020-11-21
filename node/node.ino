@@ -20,10 +20,12 @@ void setup()
 
 #if DEBUG
   Serial.begin(9600);
-  delay(1000);
+  delay(200);
   Serial.println();
   Serial.println(WiFi.macAddress());
 #endif
+
+  start_count(millis());
 
   if (mount_fs()) {
 

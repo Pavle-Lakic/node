@@ -28,7 +28,7 @@
 #define ROUND_RESET               0
 
 /**Maximum number of nodes in network*/
-#define NUMBER_OF_NODES           7
+#define NUMBER_OF_NODES           4
 
 /** String length for round to be writen to filesystem.*/
 #define ROUND_NUMBER_LENGTH       2
@@ -97,22 +97,60 @@
 #define WIFI_CHANNEL              1
 
 /** Maximum possible number of connected devices to node.*/
-#define MAX_CONNECTED             6
+#define MAX_CONNECTED             7
 
 /** Analog input pin.*/
 #define ADC_PIN                   A0
 
 /** Time for how long will CH/node wait response for node/CH in miliseconds.*/
-#define WAIT_FOR_NODES_TIMEOUT    15000
+#define WAIT_FOR_NODES_TIMEOUT    16000
 
 /** Time for how long will node wait for cluster heads to set up their AP`s.*/
-#define WAIT_FOR_CHS_TIMEOUT      6000
+#define WAIT_FOR_CHS_TIMEOUT      8000
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
 
-/** Period after cycle will begin again in milliseconds.*/
+/** Time from restart to restart of microcontrolers.*/
 #define PERIOD                    60000
+
+/** Node numbers.*/
+typedef enum
+{
+  NODE0,
+  NODE1,
+  NODE2,
+  NODE3,
+  NODE4,
+  NODE5,
+  NODE6
+} nodes;
+
+/**  
+ * @brief Check if received message from broadcast port contains
+ * value for this node 
+ * @param String of packet received.
+ * @param Length of packet.
+ * @return True if it contains message for node, else false.
+ * 
+ */
+bool check_if_for_me(char *txt, unsigned short l);
+
+/**  
+ * @brief Calculates number of nodes present in message. 
+ * @param String of packet received.
+ * @return number of nodes in message.
+ * 
+ */
+unsigned char message_length(char *txt);
+
+/**  
+ * @brief Stores value when program started executing.
+ * @param Value of that time.
+ * @return none.
+ * 
+ */
+void start_count(unsigned long a);
 
 /**  
  * @brief Calculates for how long node will be in deep sleep.
