@@ -20,12 +20,12 @@ void setup()
 
 #if DEBUG
   Serial.begin(9600);
-  delay(200);
+  delay(10);
   Serial.println();
   Serial.println(WiFi.macAddress());
 #endif
 
-  start_count(millis());
+  start_count(micros());
 
   if (mount_fs()) {
 
@@ -47,7 +47,7 @@ void setup()
 
   wifi_connect(CH);
   full_circle(&round_cnt, &ch_enable);
-  delay(500); // need some time so udp packets can be sent.
+  delay(1000); // need some time so udp packets can be sent.
   sleeping_time();
 
 #if ROUND_RESET    

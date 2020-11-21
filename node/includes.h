@@ -25,7 +25,7 @@
 /** With this flag enabled, round = 0, ch_enable = 1 will
   * be written to filesystem. Useful to set manually
   * when all nodes must be in initial state.*/
-#define ROUND_RESET               0
+#define ROUND_RESET               5
 
 /**Maximum number of nodes in network*/
 #define NUMBER_OF_NODES           4
@@ -106,13 +106,13 @@
 #define WAIT_FOR_NODES_TIMEOUT    16000
 
 /** Time for how long will node wait for cluster heads to set up their AP`s.*/
-#define WAIT_FOR_CHS_TIMEOUT      8000
+#define WAIT_FOR_CHS_TIMEOUT      5000
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
 
 /** Time from restart to restart of microcontrolers.*/
-#define PERIOD                    60000
+#define PERIOD                    60000000
 
 /** Node numbers.*/
 typedef enum

@@ -17,7 +17,7 @@ const char *filename = "/conf.txt";
 
 /** Probability that node will be cluster head for current round.
  *  Determined apriori, depends of number of nodes.*/
-const float P = 0.25;
+const float P = 0.2;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -104,27 +104,15 @@ void sleeping_time(void)
 {
     unsigned long sleep_time;
   
-    sleep_time = time_to_sleep(millis());
+    sleep_time = PERIOD - (micros() - cycle_start);
 
 #if DEBUG
       Serial.print("Going to sleep for: ");
       Serial.print(sleep_time);
-      Serial.println(" milliseconds!");
+      Serial.println(" microseconds!");
 #endif
 
-    ESP.deepSleep(sleep_time * 1000, WAKE_RF_DEFAULT);
-}
-
-unsigned long time_to_sleep(unsigned long a)
-{
-  unsigned long ret = 0;
-  unsigned long diff_us;
-
-  diff_us = a - cycle_start;
-
-  ret = PERIOD - diff_us;
-
-  return ret;
+    ESP.deepSleep(sleep_time);//, WAKE_RF_DEFAULT);
 }
 
 unsigned short read_adc(void)
@@ -564,15 +552,15 @@ void wait_for_nodes(unsigned char nodes)
      
     while (WiFi.status() != WL_CONNECTED && !timed_out_base) {
 
-      if(k == 20) {
-
+      if(k == 1500) {
+/*
 #if DEBUG
         Serial.println("Timed out while waiting for to connect to base!");
         Serial.println("Going to deep sleep ...");
 #endif
-        timed_out_base = true;
+*/        timed_out_base = true;
       }
-        delay(500);
+        delay(10);
         k += 1;
     }
 
@@ -629,15 +617,17 @@ void advertise(unsigned char CH)
 
       while (WiFi.status() != WL_CONNECTED && !timed_out) {
 
-        if ( i == 20) {
+        if ( i == 1500) {
+/*
 #if DEBUG
           Serial.println("Could not connect to strongest network for 10 seconds!");
-          Serial.println("Going to deep sleep ...");
+         Serial.println("Going to deep sleep ...");
 #endif
+*/
           timed_out = true;
         }
 
-        delay(500);
+        delay(10);
         i += 1;
       }
 
@@ -696,16 +686,16 @@ void advertise(unsigned char CH)
 #endif
      
         while (WiFi.status() != WL_CONNECTED && !timed_out) {
-          if ( i == 20 ) {
-
+          if ( i == 1500 ) {
+/*
 #if DEBUG
             Serial.println("Could not connect for 10 seconds to base station!");
             Serial.println("Going to deep sleep ...");
 #endif
-
+*/
             timed_out = true;
           }
-          delay(500);
+          delay(10);
           i += 1;
         }
 
