@@ -48,7 +48,6 @@ void setup()
   wifi_connect(CH);
   full_circle(&round_cnt, &ch_enable);
   delay(1000); // need some time so udp packets can be sent.
-  sleeping_time();
 
 #if ROUND_RESET    
     write_fs(0, 1);
@@ -59,6 +58,8 @@ void setup()
   unsigned char ch_en;
   read_fs(&rnd_cnt, &ch_en);
 #endif
+  
+  sleeping_time();
 
 }
 void loop() 

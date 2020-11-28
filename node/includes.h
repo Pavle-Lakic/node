@@ -105,8 +105,10 @@
 /** Time for how long will CH/node wait response for node/CH in miliseconds.*/
 #define WAIT_FOR_NODES_TIMEOUT    16000
 
-/** Time for how long will node wait for cluster heads to set up their AP`s.*/
-#define WAIT_FOR_CHS_TIMEOUT      5000
+/** Time for how long will node wait for cluster heads to set up their AP`s.
+ *  Can be reduced even more with condition of turning on all nodes in same time.
+ */
+#define WAIT_FOR_CHS_TIMEOUT      6000
 
 /** Port where broadcast data will be sent*/
 #define BROADCAST_PORT            2000
