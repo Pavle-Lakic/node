@@ -25,10 +25,10 @@
 /** With this flag enabled, round = 0, ch_enable = 1 will
   * be written to filesystem. Useful to set manually
   * when all nodes must be in initial state.*/
-#define ROUND_RESET               5
+#define ROUND_RESET               0
 
 /**Maximum number of nodes in network*/
-#define NUMBER_OF_NODES           4
+#define NUMBER_OF_NODES           5
 
 /** String length for round to be writen to filesystem.*/
 #define ROUND_NUMBER_LENGTH       2

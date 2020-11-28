@@ -226,7 +226,7 @@ void strongest_ch_ssid(void)
         Serial.println();
 #endif
   
-          delay(10);
+          delay(20);
         }
       }
     }
@@ -551,16 +551,20 @@ void wait_for_nodes(unsigned char nodes)
 #endif
      
     while (WiFi.status() != WL_CONNECTED && !timed_out_base) {
+      
+      //yield();
 
-      if(k == 1500) {
-/*
+      if(k == 750) {
+
+/* Careful when uncommenting, time consuming
 #if DEBUG
         Serial.println("Timed out while waiting for to connect to base!");
         Serial.println("Going to deep sleep ...");
 #endif
-*/        timed_out_base = true;
+*/
+        timed_out_base = true;
       }
-        delay(10);
+        delay(20);
         k += 1;
     }
 
@@ -617,17 +621,21 @@ void advertise(unsigned char CH)
 
       while (WiFi.status() != WL_CONNECTED && !timed_out) {
 
-        if ( i == 1500) {
-/*
+        //yield();
+
+        if ( i == 750) {
+
+/* Careful when uncomenting, time consuming
 #if DEBUG
           Serial.println("Could not connect to strongest network for 10 seconds!");
          Serial.println("Going to deep sleep ...");
 #endif
 */
+
           timed_out = true;
         }
 
-        delay(10);
+        delay(20);
         i += 1;
       }
 
@@ -686,8 +694,11 @@ void advertise(unsigned char CH)
 #endif
      
         while (WiFi.status() != WL_CONNECTED && !timed_out) {
-          if ( i == 1500 ) {
-/*
+
+          //yield();
+          
+          if ( i == 750 ) {
+/* Careful when uncommenting, time consuming.
 #if DEBUG
             Serial.println("Could not connect for 10 seconds to base station!");
             Serial.println("Going to deep sleep ...");
@@ -695,7 +706,7 @@ void advertise(unsigned char CH)
 */
             timed_out = true;
           }
-          delay(10);
+          delay(20);
           i += 1;
         }
 
