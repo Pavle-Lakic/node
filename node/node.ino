@@ -36,6 +36,8 @@ void setup()
     read_fs(&round_cnt, &ch_enable);
   }
 
+  base_signal_strength();
+
   CH = cluster_head(&round_cnt, &ch_enable);
 
   if (CH == CLUSTER_HEAD) {

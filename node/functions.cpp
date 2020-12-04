@@ -15,9 +15,8 @@
  *  will be kept.*/
 const char *filename = "/conf.txt";
 
-/** Probability that node will be cluster head for current round.
- *  Determined apriori, depends of number of nodes.*/
-const float P = 0.2;
+/** Probability that node will be cluster head for current round.*/
+float Prob = 1/NUMBER_OF_NODES;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -37,6 +36,7 @@ IPAddress ch_address;
 /**This node name.*/
 char node_name[10];
 
+/** One of ID`s which define node.*/
 unsigned char number_of_node;
 
 /** Strongest valid network.*/
@@ -48,8 +48,13 @@ uint32_t apIP;
 /** This variable holds time when cycle started in miliseconds.*/
 unsigned long cycle_start;
 
+/** This variable will track fictive number of nodes due to algorithm change.*/
+unsigned char modified_node_number = NUMBER_OF_NODES;
+
+/** Holds the value for how long node will wait before sending ADC value.*/
 char SLEEP_STRING[10];
 
+/** Needed for UDP functionalities.*/
 WiFiUDP Udp;
 
 #if DEBUG
@@ -185,6 +190,108 @@ const char* create_node_id (void)
   return node;
 }
 
+float update_probability(float n)
+{
+  float p = 10;
+  
+  p = 1/n;
+
+  return p;
+}
+
+bool modify_N(unsigned char p)
+{
+  bool ret = false;
+
+  modified_node_number = round((NUMBER_OF_NODES * p)/100);
+
+#if DEBUG
+  Serial.print("Modified number of nodes = ");
+  Serial.println(modified_node_number);
+#endif
+
+  if ((modified_node_number < 1) && (modified_node_number >= 0)){
+    modified_node_number = 1;
+  }
+
+  if (modified_node_number >= 0) {
+
+    Prob = update_probability(modified_node_number);
+
+#if DEBUG
+    Serial.print("Updated probability = ");
+    Serial.println(Prob, 3);
+#endif
+    
+    ret = true;
+  }
+
+#if DEBUG
+  Serial.print("Modified number of nodes after change = ");
+  Serial.println(modified_node_number);
+#endif
+
+  return ret;
+}
+
+void base_signal_strength(void)
+{
+  unsigned char n;
+  int power;
+  bool changed;
+  bool base_found = false;
+
+  n = WiFi.scanNetworks();
+
+  if (n == 0){
+
+#if DEBUG
+    Serial.println("Did not find any networks at all!");
+    Serial.println("Going to sleep ...");
+#endif
+
+    sleeping_time();
+  }
+  else {
+    for (int i = 0; i < n; i++) {
+      if (WiFi.SSID(i) == BASE_SSID) {
+
+        base_found = true;
+        power = -WiFi.RSSI(i);
+        changed = modify_N(power);
+
+#if DEBUG
+        Serial.print("Base SSID = ");
+        Serial.println(WiFi.SSID(i));
+        Serial.print("Signal strength = ");
+        Serial.println(WiFi.RSSI(i));
+#endif
+
+#if DEBUG
+        if (changed == true) {
+          Serial.println("Successfully changed modified number of nodes!");  
+        }
+        else {
+          Serial.println("Could not change modified number of nodes!");
+        }
+#endif
+
+      }
+      delay(20);
+    }
+
+    if (base_found == false) {
+
+#if DEBUG
+      Serial.println("Could not find base!");
+#endif
+      
+      sleeping_time();
+    }
+    
+  }
+}
+
 void strongest_ch_ssid(void)
 { 
   unsigned char n;
@@ -210,8 +317,8 @@ void strongest_ch_ssid(void)
     power = WiFi.RSSI(0);
     strongest = WiFi.SSID(0);
 
-    for (int i = 0; i < n; ++i) {
-     if (check_ch(WiFi.SSID(i).c_str()) > 0) {
+    for (int i = 0; i < n; ++i) {      
+      if (check_ch(WiFi.SSID(i).c_str()) > 0) {
         if (WiFi.RSSI(i) > power) {
           power = WiFi.RSSI(i);
           strongest = WiFi.SSID(i);
@@ -903,7 +1010,7 @@ void wifi_connect(unsigned char CH)
 void full_circle(unsigned char *round_cnt, unsigned char *ch_enable)
 { 
   *round_cnt += 1;
-  if (*round_cnt > NUMBER_OF_NODES - 1)
+  if (*round_cnt > modified_node_number - 1)
   {
     *round_cnt = 0;
     *ch_enable = 1;
@@ -924,7 +1031,7 @@ unsigned char cluster_head(unsigned char *round_cnt, unsigned char *ch_enable)
   unsigned char ret;
 
   rnd_nmb = random_number();
-  threshold = calculate_threshold(P, *round_cnt);
+  threshold = calculate_threshold(*round_cnt);
 
   if ((rnd_nmb < threshold) && (*ch_enable == 1)) {
     *ch_enable = 0;
@@ -1001,11 +1108,11 @@ void read_fs(unsigned char *round_cnt, unsigned char *ch)
 #endif
 }
 
-float calculate_threshold(float P, unsigned char r)
+float calculate_threshold(unsigned char r)
 {
   float T;
 
-  T = P/(1 - P*(r % ((unsigned char)round(1/P))));
+  T = Prob/(1 - Prob*(r % ((unsigned char)round(1/Prob))));
 
 #if DEBUG
   Serial.print("r = ");
