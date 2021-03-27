@@ -28,7 +28,7 @@
 #define ROUND_RESET               0
 
 /**Maximum number of nodes in network*/
-#define NUMBER_OF_NODES           5
+#define NUMBER_OF_NODES           7
 
 /** String length for round to be writen to filesystem.*/
 #define ROUND_NUMBER_LENGTH       2
