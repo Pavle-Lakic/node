@@ -16,7 +16,7 @@
 const char *filename = "/conf.txt";
 
 /** Probability that node will be cluster head for current round.*/
-float Prob = 1/NUMBER_OF_NODES;
+float Prob = 1.0/NUMBER_OF_NODES;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -190,11 +190,11 @@ const char* create_node_id (void)
   return node;
 }
 
-float update_probability(float n)
+float update_probability(unsigned char n)
 {
   float p = 10;
   
-  p = 1/n;
+  p = 1.0/n;
 
   return p;
 }
