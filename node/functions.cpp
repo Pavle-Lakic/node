@@ -15,9 +15,8 @@
  *  will be kept.*/
 const char *filename = "/conf.txt";
 
-/** Probability that node will be cluster head for current round.
- *  Determined apriori, depends of number of nodes.*/
-const float P = 0.2;
+/** Probability that node will be cluster head for current round.*/
+float P = 1.0/NUMBER_OF_NODES;
 
 /** This is the address of base station.*/
 const IPAddress base_station(192,168,4,1);
@@ -827,7 +826,7 @@ void wait_for_CH (void)
           Serial.println("In future try modem sleep.");
 #endif
 
-          delay(delay_time * 1000);
+          //delay(delay_time * 1000);
 
 #if DEBUG
           Serial.print("Sending packet to CH =  ");
